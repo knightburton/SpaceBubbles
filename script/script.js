@@ -2,6 +2,8 @@ $(function() {
 	// Canvas and context
 	var canvas = document.getElementById("game");	// get the canvas
 	var context = canvas.getContext("2d");			// init the context
+	var canvas_next = document.getElementById("next");	// get the next canvas
+	var context_next = canvas_next.getContext("2d");			// init the next context
 
 	// Map
 	var map = {
@@ -80,14 +82,14 @@ $(function() {
 
 		// Init tha map
 		map.width = map.columns * map.bubble_w + map.bubble_w/2;
-		map.height = (map.rows - 1) * map.bubble_h + map.bubble_h/2;
+		map.height = canvas.height - map.bubble_h - 10;
 
 		// Init the gamer
 		gamer.x = map.x + map.width/2 - map.bubble_w/2;
 		gamer.y = map.y + map.height;
 		gamer.angle = 90;
-		gamer.next.x = gamer.x + 4 * map.bubble_w;
-		gamer.next.y = gamer.y;
+		gamer.next.x = 10
+		gamer.next.y = 10
 
 		// Init and Refresh the hearths for the nice look
 		initLivesImg();
@@ -135,6 +137,8 @@ $(function() {
 	function loop() {
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		drawBubbles();
+		drawGamer();
+		drawNext();
 	}
 
 	// Mouse movement in the canavs
@@ -236,12 +240,12 @@ $(function() {
 		gamer.bubble.x = gamer.x;
 		gamer.bubble.y = gamer.y;
 
-		var nextBubbleType = random(1,4);
+		var nextBubbleType = random(0,4);
 
 		gamer.next.type = nextBubbleType;
 	}
 
-	// Draw the bubbles to the canvas
+	// Draw the bubbles
 	function drawBubbles() {
 		var img = new Image();
 		img.src = 'assets/img/bubbles.png';
@@ -260,6 +264,30 @@ $(function() {
 			}
 		}
 	}
+
+	// Draw the gamer's bubble
+	function drawGamer() {
+		var img = new Image();
+		img.src = 'assets/img/bubbles.png';
+		img.onload = function() {
+			gamer.bubble.x = gamer.x;
+			gamer.bubble.y = gamer.y;
+			var crop = getBubbleCrop(gamer.bubble.type);
+			context.drawImage(img, crop, 0, map.bubble_w, map.bubble_h, gamer.bubble.x, gamer.bubble.y, map.bubble_w, map.bubble_h);
+		}
+	}
+
+	// Draw the next bubble
+	function drawNext() {
+		var imgNext = new Image();
+		imgNext.src = 'assets/img/bubbles.png';
+		imgNext.onload = function() {
+			var crop = getBubbleCrop(gamer.next.type);
+			context_next.clearRect(0, 0, 70, 70);
+			context_next.drawImage(imgNext, crop, 0, map.bubble_w, map.bubble_h, gamer.next.x, gamer.next.y, map.bubble_w, map.bubble_h);
+		}
+	}
+
 
 	// Return the bubble position
 	function getBubblePosition(column, row) {
