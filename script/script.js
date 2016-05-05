@@ -9,7 +9,7 @@ $(function() {
 		y: 0,			// y position
 		width: 0,		// width
 		height: 0,		// height
-		columns: 10,	// number of columns
+		columns: 9,	// number of columns
 		rows: 10,		// number of rows
 		bubble_w: 50,	// bubble image width
 		bubble_h: 50,	// bubble image height
@@ -30,13 +30,12 @@ $(function() {
 		x: 0,				// gamer x position
 		x: 0,				// gamer y position
 		angle: 0,			// gamer and mouse angle
-		type: 0,			// gamer type
 		bubble: {			// actual bubble info
 			x: 0,			// bubble x position
 			y: 0,			// bubble y position
 			angle: 0,		// bubble and mouse angle
 			speed: 1000,	// bubble move speed
-			type: 0			// bubble type
+			type: -1		// bubble type
 		},
 		next: {				// the next bubble info
 			x: 0,			// next bubble x position
@@ -67,12 +66,15 @@ $(function() {
 		canvas.addEventListener('mousemove', canvasMouseMove);
 		canvas.addEventListener('click', canvasClick);
 
+		// subscribe to menu clicks
+		$('#new-game-button').on('click', newGame);
+
 
 		// init the bubbles array
 		for(var i = 0; i < map.columns; i++) {
 			map.bubbles[i] = [];
 			for(var j = 0; j < map.rows; j++) {
-				map.bubbles[i][j] = new Bubble(i,j, random(1,4));
+				map.bubbles[i][j] = new Bubble(i,j, -1);
 			}
 		}
 
@@ -84,7 +86,6 @@ $(function() {
 		gamer.x = map.x + map.width/2 - map.bubble_w/2;
 		gamer.y = map.y + map.height;
 		gamer.angle = 90;
-		gamer.type = 0;
 		gamer.next.x = gamer.x + 4 * map.bubble_w;
 		gamer.next.y = gamer.y;
 
@@ -92,34 +93,17 @@ $(function() {
 		initLivesImg();
 		refreshLives(gamer.lives);
 
+		// new game
 		newGame();
 
 		// Call the main loop function
 		loop();
 	}
 
-	// Load the bubble images
-	function loadBubbleImages() {
-		var images = [];
-		for(var i = 0; i < 5 ; i++) {
-			var image = new Image();
-			image.src = 'assets/img/' + i + '.png';
-			images[i] = image;
-		}
-		return images;
-	}
-
 	// Load the hearth image
 	function loadHeartImage() {
 		var hearth = new Image();
 		hearth.src = 'assets/img/hearth.png';
-		return hearth;
-	}
-
-	// Load the UFO image
-	function loadUFOImage() {
-		var hearth = new Image();
-		hearth.src = 'assets/img/ufo.png';
 		return hearth;
 	}
 
@@ -136,13 +120,21 @@ $(function() {
 		// refresh the stats display
 		refreshLives(gamer.lives);
 		refreshScore(gamer.score);
-		refreshlevel(gamer.level);
+		refreshLevel(gamer.level);
 		calculateTime();
+
+		// Create a new map
+		createMap();
+
+		// Init the next and set the gamer bubble
+		nextBubble();
+		nextBubble();
 	}
 
 	// The main event loop function
 	function loop() {
-		console.log("loop: Not implemented yet!");
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		drawBubbles();
 	}
 
 	// Mouse movement in the canavs
@@ -193,7 +185,7 @@ $(function() {
 	}
 
 	// Refresh the level display
-	function refreshlevel(level) {
+	function refreshLevel(level) {
 		$('#game-level').text(level);
 	}
 
@@ -216,6 +208,74 @@ $(function() {
 		}
 		refreshTimeDisplay(gamer.timer.minute, gamer.timer.second);
 		gamer.timer.second++;
+	}
+
+	// Create a new random filled map
+	function createMap() {
+		for(var j = 0; j < map.rows; j++) {
+			var randomBubble = random(1,4);
+			var counter = 0;
+			for(var i = 0; i < map.columns; i++) {
+				if(counter > 2) {
+					var newRandomBubble = random(1,4);
+					if(newRandomBubble == randomBubble) {
+						newRandomBubble = (newRandomBubble + 1) % 4;
+					}
+					randomBubble = newRandomBubble;
+					counter = 0;
+				}
+				counter++;
+				map.bubbles[i][j].type = randomBubble;
+			}
+		}
+	}
+
+	// Init the next bubbles
+	function nextBubble() {
+		gamer.bubble.type = gamer.next.type;
+		gamer.bubble.x = gamer.x;
+		gamer.bubble.y = gamer.y;
+
+		var nextBubbleType = random(1,4);
+
+		gamer.next.type = nextBubbleType;
+	}
+
+	// Draw the bubbles to the canvas
+	function drawBubbles() {
+		var img = new Image();
+		img.src = 'assets/img/bubbles.png';
+		img.onload = function() {
+			for(var j = 0; j < map.rows; j++) {
+				for(var i = 0; i < map.columns; i++) {
+					var bubble = map.bubbles[i][j];
+
+					// get the current bubble position
+					var position = getBubblePosition(i, j);
+					map.bubbles[i][j].x = position.x;
+					map.bubbles[i][j].y = position.y;
+					var crop = getBubbleCrop(map.bubbles[i][j].type);
+					context.drawImage(img, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
+				}
+			}
+		}
+	}
+
+	// Return the bubble position
+	function getBubblePosition(column, row) {
+		var x = map.x + column * map.bubble_w;
+		
+		if((row + 1) % 2) {
+			x += map.bubble_w / 2;
+		}
+
+		var y = map.y + row * (map.bubble_h - 5);
+		return {x: x, y: y};
+	}
+
+	// Return the crop x position
+	function getBubbleCrop(type) {
+		return type * map.bubble_w;
 	}
 
 	init();
