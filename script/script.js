@@ -21,7 +21,7 @@ $(function() {
 	var Bubble = function(x, y, type) {
 		this.x = x;				// set the bubble x position
 		this.y = y;				// set the bubble y position
-		thys.type = type;		// set the bubble type
+		this.type = type;		// set the bubble type
 		this.removed = false;	// set the bubble removed option
 	}
 
@@ -44,10 +44,14 @@ $(function() {
 			type: 0			// next bubble type
 		},
 		lives: 3,			// actual lives
-		score: 0,			// actual score
-		min: 0,				// actual min
-		sec: 0,				// actual sec
-		level: 0			// actual level
+		max_lives: 3,		// maximum lives
+		score: 0,			// actual score,
+		level: 0,			// actual level
+		timer: {
+			minute: 0,		// actual timer minute
+			second: 0,		// actual timer second
+			interval: null	// timer interval
+		}
 	};
 
 	// Bubble images
@@ -60,13 +64,14 @@ $(function() {
 	// Initialize
 	function init() {
 		// subscribe to mouse events
-		canvas.on('mousemove', canvasMouseMove);
-		canvas.on('click', canvasClick);
+		canvas.addEventListener('mousemove', canvasMouseMove);
+		canvas.addEventListener('click', canvasClick);
+
 
 		// init the bubbles array
 		for(var i = 0; i < map.columns; i++) {
 			map.bubbles[i] = [];
-			for(var j = 0; j < map.rows; i++) {
+			for(var j = 0; j < map.rows; j++) {
 				map.bubbles[i][j] = new Bubble(i,j, random(1,4));
 			}
 		}
@@ -83,7 +88,10 @@ $(function() {
 		gamer.next.x = gamer.x + 4 * map.bubble_w;
 		gamer.next.y = gamer.y;
 
-		// Call the new game function
+		// Init and Refresh the hearths for the nice look
+		initLivesImg();
+		refreshLives(gamer.lives);
+
 		newGame();
 
 		// Call the main loop function
@@ -116,43 +124,99 @@ $(function() {
 	}
 
 	// New game
-	function newgame() {
+	function newGame() {
 		// reset the stats
 		gamer.lives = 3;
 		gamer.score = 0;
-		gamer.min = 0;
-		gamer.sec = 0;
-		gamer.level = 0;
+		gamer.level = 1;
+		gamer.timer.minute = 0;
+		gamer.timer.second = 0;
+		gamer.timer.interval = null;
 
+		// refresh the stats display
+		refreshLives(gamer.lives);
+		refreshScore(gamer.score);
+		refreshlevel(gamer.level);
+		calculateTime();
 	}
 
 	// The main event loop function
 	function loop() {
-		window.alert("Not implemented yet!");
+		console.log("loop: Not implemented yet!");
 	}
 
 	// Mouse movement in the canavs
 	function canvasMouseMove() {
-		window.alert("Not implemented yet!");
+		console.log("canvasMouseMove: Not implemented yet!");
 	}
 
 	// Click in the canvas
 	function canvasClick() {
-		window.alert("Not implemented yet!");
+		console.log("canvasClick: Not implemented yet!");
 	}
 
 	// Get a random int between low and high
-    function random(low, high) {
-        return Math.floor(low + Math.random() * (high - low + 1));
-    }
+	function random(low, high) {
+		return Math.floor(low + Math.random() * (high - low + 1));
+	}
 
 	// Convert radians to degrees
-    function rad2Deg(angle) {
-        return angle * (180 / Math.PI);
-    }
-    
-    // Convert degrees to radians
-    function deg2Rad(angle) {
-        return angle * (Math.PI / 180);
-    }
+	function rad2Deg(angle) {
+		return angle * (180 / Math.PI);
+	}
+	
+	// Convert degrees to radians
+	function deg2Rad(angle) {
+		return angle * (Math.PI / 180);
+	}
+
+	// Init the lives image
+	function initLivesImg() {
+		var img = loadHeartImage();
+		for(var i = 0; i < gamer.lives; i++) {
+			$(img).clone().appendTo('#lives-img').addClass('lives').attr('id', (i + 1) + '_live');
+		}
+	}
+
+	// Refresh the lives display
+	function refreshLives(lives) {
+		var i = gamer.max_lives;
+		while (i > lives) {
+			$('#' + i + '_live').css('display', 'none');
+			i--;
+		}
+	}
+
+	// Refresh the Score display
+	function refreshScore(score) {
+		$('#game-score').text(score);
+	}
+
+	// Refresh the level display
+	function refreshlevel(level) {
+		$('#game-level').text(level);
+	}
+
+	// Refresh the time display
+	function refreshTimeDisplay(minute, second) {
+		var time = "";
+		(minute < 10) ? (time = "0" + minute) : (time = minute);
+		(second < 10) ? (time += ":0" + second) : (time += ":" + second);
+		$('#game-time').text(time);
+	}
+
+	// Calculate the current time
+	function calculateTime() {
+		if(gamer.timer.second > 59) {
+			gamer.timer.minute++;
+			gamer.timer.second = 0;
+		}
+		if(gamer.timer.second > 59 && gamer.timer.minute > 59) {
+			clearInterval(gamer.timer.interval);
+		}
+		refreshTimeDisplay(gamer.timer.minute, gamer.timer.second);
+		gamer.timer.second++;
+	}
+
+	init();
 });
