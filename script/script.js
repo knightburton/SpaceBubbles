@@ -57,6 +57,7 @@ $(function() {
 
 	// The background music object
 	var music = null;
+	var music_mute = false;
 
 	// Bubbles images
 	var bubbles_image = null;
@@ -74,6 +75,7 @@ $(function() {
 
 		// subscribe to menu clicks
 		$('#new-game-button').on('click', newGame);
+		$('#mute-button').on('click', toggleMusicMute);
 
 
 		// init the bubbles array
@@ -116,6 +118,19 @@ $(function() {
 		music.loop = true;
 		music.play();
 		music.volume = 0.7;
+	}
+
+	// Mute and unmute the background music
+	function toggleMusicMute() {
+		if(music_mute) {
+			music_mute = false;
+			music.muted = false;
+			refreshMuteMenuItem(false);
+		} else {
+			music_mute = true;
+			music.muted = true;
+			refreshMuteMenuItem(true);
+		}
 	}
 
 	// Load the hearth image
@@ -262,6 +277,15 @@ $(function() {
 		}
 		refreshTimeDisplay(gamer.timer.minute, gamer.timer.second);
 		gamer.timer.second++;
+	}
+
+	// Refresh the mute menu item
+	function refreshMuteMenuItem(muted) {
+		if(muted) {
+			$('#mute-button').text('Music OFF');
+		} else {
+			$('#mute-button').text('Music ON');
+		}
 	}
 
 	// Create a new random filled map
