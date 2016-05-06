@@ -55,6 +55,9 @@ $(function() {
 		}
 	};
 
+	// The background music object
+	var music = null;
+
 	// Bubbles images
 	var bubbles_image = null;
 	// Boolean for check tha bubbles image load.
@@ -62,6 +65,9 @@ $(function() {
 
 	// Initialize
 	function init() {
+		// Init the background music
+		initBackgroundMusic();
+
 		// subscribe to mouse events
 		canvas.addEventListener('mousemove', canvasMouseMove);
 		canvas.addEventListener('click', canvasClick);
@@ -101,6 +107,15 @@ $(function() {
 
 		// Call the main loop function
 		loop();
+	}
+
+	// Init and start the background music
+	function initBackgroundMusic() {
+		music = document.createElement('AUDIO');
+		music.src = 'assets/sound/Most_awesome_8-bit_song_ever.mp3';
+		music.loop = true;
+		music.play();
+		music.volume = 0.7;
 	}
 
 	// Load the hearth image
@@ -161,6 +176,7 @@ $(function() {
 		var mouse_poisition = getCursorPosition(e);
 		var mouse_angle = rad2Deg(Math.atan2((gamer.y + map.bubble_h / 2) - mouse_poisition.y, mouse_poisition.x - (gamer.x + map.bubble_w / 2)));
 
+		// convert to 360
 		if(mouse_angle < 0) {
 			mouse_angle = 180 + (180 + mouse_angle);
 		}
@@ -177,7 +193,6 @@ $(function() {
 			}
 		}
 
-		console.log(mouse_angle);
 		gamer.angle = mouse_angle;
 	}
 
