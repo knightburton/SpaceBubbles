@@ -55,12 +55,10 @@ $(function() {
 		}
 	};
 
-	// Bubble images
-	var b_images = [];
-	// Hearth image
-	var h_image = null;
-	// Ufo image
-	var u_image = null;
+	// Bubbles images
+	var bubbles_image = null;
+	// Boolean for check tha bubbles image load.
+	var loaded = false;
 
 	// Initialize
 	function init() {
@@ -91,9 +89,12 @@ $(function() {
 		gamer.next.x = 10
 		gamer.next.y = 10
 
-		// Init and Refresh the hearths for the nice look
+		// Init and Refresh the hearths
 		initLivesImg();
 		refreshLives(gamer.lives);
+
+		// Init the bubbles_image
+		loadBubbleImages();
 
 		// new game
 		newGame();
@@ -107,6 +108,15 @@ $(function() {
 		var hearth = new Image();
 		hearth.src = 'assets/img/hearth.png';
 		return hearth;
+	}
+
+	// Load the bubbles image
+	function loadBubbleImages() {
+		bubbles_image = new Image();
+		bubbles_image.src = 'assets/img/bubbles.png';
+		bubbles_image.onload = function() {
+			loaded = true;
+		};
 	}
 
 	// New game
@@ -135,15 +145,40 @@ $(function() {
 
 	// The main event loop function
 	function loop() {
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		drawBubbles();
-		drawGamer();
-		drawNext();
+		// Animation fram for this function
+		window.requestAnimationFrame(loop);
+
+		if(loaded) {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+			renderBubbles();
+			renderGamer();
+			renderNext();
+		}
 	}
 
 	// Mouse movement in the canavs
-	function canvasMouseMove() {
-		console.log("canvasMouseMove: Not implemented yet!");
+	function canvasMouseMove(e) {
+		var mouse_poisition = getCursorPosition(e);
+		var mouse_angle = rad2Deg(Math.atan2((gamer.y + map.bubble_h / 2) - mouse_poisition.y, mouse_poisition.x - (gamer.x + map.bubble_w / 2)));
+
+		if(mouse_angle < 0) {
+			mouse_angle = 180 + (180 + mouse_angle);
+		}
+
+		if(mouse_angle > 90 && mouse_angle < 270) {
+			// left side position
+			if (mouse_angle > 170) {
+				mouse_angle = 170;
+			}
+		} else {
+			// right side position
+			if(mouse_angle < 10 || mouse_angle >= 270) {
+				mouse_angle = 10;
+			}
+		}
+
+		console.log(mouse_angle);
+		gamer.angle = mouse_angle;
 	}
 
 	// Click in the canvas
@@ -151,7 +186,7 @@ $(function() {
 		console.log("canvasClick: Not implemented yet!");
 	}
 
-	// Get a random int between low and high
+	// Get a random int between low and high arguments
 	function random(low, high) {
 		return Math.floor(low + Math.random() * (high - low + 1));
 	}
@@ -245,40 +280,34 @@ $(function() {
 		gamer.next.type = nextBubbleType;
 	}
 
-	// Draw the bubbles
-	function drawBubbles() {
-		var img = new Image();
-		img.src = 'assets/img/bubbles.png';
-		img.onload = function() {
-			for(var j = 0; j < map.rows; j++) {
-				for(var i = 0; i < map.columns; i++) {
-					var bubble = map.bubbles[i][j];
+	// Render the bubbles
+	function renderBubbles() {
+		for(var j = 0; j < map.rows; j++) {
+			for(var i = 0; i < map.columns; i++) {
+				var bubble = map.bubbles[i][j];
 
-					// get the current bubble position
-					var position = getBubblePosition(i, j);
-					map.bubbles[i][j].x = position.x;
-					map.bubbles[i][j].y = position.y;
-					var crop = getBubbleCrop(map.bubbles[i][j].type);
-					context.drawImage(img, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
-				}
+				// get the current bubble position
+				var position = getBubblePosition(i, j);
+				map.bubbles[i][j].x = position.x;
+				map.bubbles[i][j].y = position.y;
+				var crop = getBubbleCrop(map.bubbles[i][j].type);
+				context.drawImage(bubbles_image, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
 			}
 		}
 	}
 
-	// Draw the gamer's bubble
-	function drawGamer() {
-		var img = new Image();
-		img.src = 'assets/img/bubbles.png';
-		img.onload = function() {
-			gamer.bubble.x = gamer.x;
-			gamer.bubble.y = gamer.y;
-			var crop = getBubbleCrop(gamer.bubble.type);
-			context.drawImage(img, crop, 0, map.bubble_w, map.bubble_h, gamer.bubble.x, gamer.bubble.y, map.bubble_w, map.bubble_h);
-		}
+	// Render the gamer's bubble
+	function renderGamer() {
+		renderAimLine();
+
+		gamer.bubble.x = gamer.x;
+		gamer.bubble.y = gamer.y;
+		var crop = getBubbleCrop(gamer.bubble.type);
+		context.drawImage(bubbles_image, crop, 0, map.bubble_w, map.bubble_h, gamer.bubble.x, gamer.bubble.y, map.bubble_w, map.bubble_h);
 	}
 
-	// Draw the next bubble
-	function drawNext() {
+	// Render the next bubble
+	function renderNext() {
 		var imgNext = new Image();
 		imgNext.src = 'assets/img/bubbles.png';
 		imgNext.onload = function() {
@@ -287,7 +316,6 @@ $(function() {
 			context_next.drawImage(imgNext, crop, 0, map.bubble_w, map.bubble_h, gamer.next.x, gamer.next.y, map.bubble_w, map.bubble_h);
 		}
 	}
-
 
 	// Return the bubble position
 	function getBubblePosition(column, row) {
@@ -304,6 +332,29 @@ $(function() {
 	// Return the crop x position
 	function getBubbleCrop(type) {
 		return type * map.bubble_w;
+	}
+
+	// Get the actuel position of the cursor
+	function getCursorPosition(e) {
+		var bound = canvas.getBoundingClientRect();
+		return {
+			x: Math.round((e.clientX - bound.left) / (bound.right - bound.left) * canvas.width),
+			y: Math.round((e.clientY - bound.top) / (bound.bottom - bound.top) * canvas.height)
+		};
+	}
+
+	// Render the aiming line for the user
+	function renderAimLine() {
+		var c = {
+			x: gamer.x + map.bubble_w / 2,
+			y: gamer.y + map.bubble_h / 2
+		};
+		context.lineWidth = 3;
+		context.strokeStyle = '#00ff00';
+		context.beginPath();
+		context.moveTo(c.x, c.y);
+		context.lineTo(c.x + 2 * map.bubble_w * Math.cos(deg2Rad(gamer.angle)), c.y -  2 * map.bubble_h * Math.sin(deg2Rad(gamer.angle)));
+		context.stroke();
 	}
 
 	init();
