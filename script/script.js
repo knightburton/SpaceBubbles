@@ -12,11 +12,14 @@ $(function() {
 		width: 0,		// width
 		height: 0,		// height
 		columns: 9,		// number of columns
-		rows: 10,		// number of rows
+		rows: 12,		// number of rows
+		downgrade: 3,	// numbers of free rows at the start
 		bubble_w: 50,	// bubble image width
 		bubble_h: 50,	// bubble image height
-		r: 25,			// bubble radius from center
-		bubbles: []		// 2D bubbles array
+		bubble_r: 25,	// bubble radius from center
+		bubble_s: 5,	// bubble split pixel
+		bubbles: [],	// 2D bubbles array
+		similar: []		// 2D array for similar bubbles
 	};
 
 	// Bubble class
@@ -36,7 +39,7 @@ $(function() {
 			x: 0,			// bubble x position
 			y: 0,			// bubble y position
 			angle: 0,		// bubble and mouse angle
-			speed: 1000,	// bubble move speed
+			speed: 10,		// bubble move speed
 			type: -1		// bubble type
 		},
 		next: {				// the next bubble info
@@ -89,6 +92,8 @@ $(function() {
 	var bubbles_image = null;
 	// Boolean for check tha bubbles image load.
 	var loaded = false;
+	// Boolean for mooving bubbles.
+	var processing = false;
 
 	// Initialize
 	function init() {
@@ -254,6 +259,10 @@ $(function() {
 			renderGamer();
 			renderNext();
 		}
+
+		if(processing) {
+			shoot();
+		}
 	}
 
 	// Mouse movement in the canavs
@@ -283,7 +292,13 @@ $(function() {
 
 	// Click in the canvas
 	function canvasClick() {
-		console.log("canvasClick: Not implemented yet!");
+		// play the shoot effect
+		effects.shoot.play();
+
+		gamer.bubble.x = gamer.x;
+		gamer.bubble.y = gamer.y;
+		gamer.bubble.angle = gamer.angle;
+		processing = true;
 	}
 
 	// Get a random int between low and high arguments
@@ -369,7 +384,7 @@ $(function() {
 
 	// Create a new random filled map
 	function createMap() {
-		for(var j = 0; j < map.rows; j++) {
+		for(var j = 0; j < map.rows - map.downgrade; j++) {
 			var randomBubble = random(1,4);
 			var counter = 0;
 			for(var i = 0; i < map.columns; i++) {
@@ -418,8 +433,10 @@ $(function() {
 	function renderGamer() {
 		renderAimLine();
 
-		gamer.bubble.x = gamer.x;
-		gamer.bubble.y = gamer.y;
+		if(!processing) {
+			gamer.bubble.x = gamer.x;
+			gamer.bubble.y = gamer.y;
+		}
 		var crop = getBubbleCrop(gamer.bubble.type);
 		context.drawImage(bubbles_image, crop, 0, map.bubble_w, map.bubble_h, gamer.bubble.x, gamer.bubble.y, map.bubble_w, map.bubble_h);
 	}
@@ -435,7 +452,7 @@ $(function() {
 		}
 	}
 
-	// Return the bubble position
+	// Returns the bubble position
 	function getBubblePosition(column, row) {
 		var x = map.x + column * map.bubble_w;
 		
@@ -443,8 +460,32 @@ $(function() {
 			x += map.bubble_w / 2;
 		}
 
-		var y = map.y + row * (map.bubble_h - 5);
+		var y = map.y + row * (map.bubble_h - map.bubble_s);
 		return {x: x, y: y};
+	}
+
+	// Return the matrix current position
+	function getMatrixPosition(x, y) {
+		var my = Math.floor((y - map.y) / (map.bubble_h - map.bubble_s));
+
+		var xoffset = 0;
+		if((my + 1) % 2) {
+			xoffset = map.bubble_w / 2;
+		}
+
+		var mx = Math.floor(((x - xoffset) - map.x) / map.bubble_w);
+		return {x: mx, y: my};
+	}
+
+	// Returns the distance between two bubbles
+	function isCollide(x1, y1, r1, x2, y2, r2) {
+		var deltax = x1 - x2;
+		var deltay = y1 - y2;
+		var distance = Math.sqrt(deltax * deltax + deltay * deltay);
+		if(distance <=  r1 + r2) {
+			return true;
+		}
+		return false;
 	}
 
 	// Return the crop x position
@@ -473,6 +514,88 @@ $(function() {
 		context.moveTo(c.x, c.y);
 		context.lineTo(c.x + 2 * map.bubble_w * Math.cos(deg2Rad(gamer.angle)), c.y -  2 * map.bubble_h * Math.sin(deg2Rad(gamer.angle)));
 		context.stroke();
+	}
+
+	// Shoot the bubble
+	function shoot() {
+		if(processing) {
+			gamer.bubble.x += gamer.bubble.speed * Math.cos(deg2Rad(gamer.bubble.angle));
+			gamer.bubble.y += gamer.bubble.speed * -1 * Math.sin(deg2Rad(gamer.bubble.angle));
+
+			if(gamer.bubble.x <= map.x) {
+				// play the hit effect
+				effects.hit.play();
+
+				// left side
+				gamer.bubble.angle = 180 - gamer.bubble.angle;
+				gamer.bubble.x = map.x;
+			} else if(gamer.bubble.x + map.bubble_w >= map.x + map.width) {
+				// play the hit effect
+				effects.hit.play();
+
+				// right side
+				gamer.bubble.angle = 180 - gamer.bubble.angle;
+				gamer.bubble.x = map.x + map.width - map.bubble_w;
+			}
+
+			// top
+			if(gamer.bubble.y <= map.y) {
+				// play the hit effect
+				effects.hit.play();
+
+				gamer.bubble.y = map.y;
+				processing = false;
+			}
+			// detect other bubbles
+			for(var i = 0; i < map.columns; i++) {
+				for(var j = 0; j < map.rows; j++) {
+					var b = map.bubbles[i][j];
+					// ignore the removed or empty bubbles space
+					if(b.type == -1) {
+						continue;
+					}
+
+					var position = getBubblePosition(i,j);
+					if(isCollide(gamer.bubble.x + map.bubble_w / 2,
+								 gamer.bubble.y + map.bubble_h / 2,
+								 map.bubble_r,
+								 position.x + map.bubble_w / 2,
+								 position.y + map.bubble_h / 2,
+								 map.bubble_r)) {
+						putChains();
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	// Fix the shot bubble
+	function putChains() {
+		processing = false;
+		// get the bubble's current center position
+		var cx = gamer.bubble.x + map.bubble_w / 2;
+		var cy = gamer.bubble.y + map.bubble_h / 2;
+		var position = getMatrixPosition(cx, cy);
+		if(position.x < 0) {
+			position.x = 0;
+		}
+
+		if(position.x >= map.columns) {
+			position.x = map.columns - 1; // couse of array
+		}
+
+		if(position.y < 0) {
+			position.y = 0;
+		}
+
+		if(position.y >= map.rows) {
+			position.y = map.rows - 1; // couse of array
+		}
+
+		map.bubbles[position.x][position.y].type = gamer.bubble.type;
+
+		//TODO: check game over
 	}
 
 	init();
