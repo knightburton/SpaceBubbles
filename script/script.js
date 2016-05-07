@@ -55,9 +55,19 @@ $(function() {
 		}
 	};
 
-	// The background music object
-	var music = null;
-	var music_mute = false;
+	// The music object
+	var music = {
+		mute: false,
+		dom: null
+	};
+
+	// The effects object
+	var effects = {
+		mute: false,
+		shoot: null,
+		explosion: null,
+		hit: null
+	};
 
 	// Bubbles images
 	var bubbles_image = null;
@@ -68,6 +78,8 @@ $(function() {
 	function init() {
 		// Init the background music
 		initBackgroundMusic();
+		// Init the effects
+		initEffects();
 
 		// subscribe to mouse events
 		canvas.addEventListener('mousemove', canvasMouseMove);
@@ -75,7 +87,8 @@ $(function() {
 
 		// subscribe to menu clicks
 		$('#new-game-button').on('click', newGame);
-		$('#mute-button').on('click', toggleMusicMute);
+		$('#music-button').on('click', toggleMusicMute);
+		$('#effects-button').on('click', toggleEffectsMute);
 
 
 		// init the bubbles array
@@ -113,24 +126,42 @@ $(function() {
 
 	// Init and start the background music
 	function initBackgroundMusic() {
-		music = document.createElement('AUDIO');
-		music.src = 'assets/sound/Most_awesome_8-bit_song_ever.mp3';
-		music.loop = true;
-		music.play();
-		music.volume = 0.7;
+		music.dom = document.createElement('AUDIO');
+		music.dom.src = 'assets/sound/Most_awesome_8-bit_song_ever.mp3';
+		music.dom.loop = true;
+		music.dom.play();
+		music.dom.volume = 0.7;
 	}
 
 	// Mute and unmute the background music
 	function toggleMusicMute() {
-		if(music_mute) {
-			music_mute = false;
-			music.muted = false;
-			refreshMuteMenuItem(false);
-		} else {
-			music_mute = true;
-			music.muted = true;
-			refreshMuteMenuItem(true);
-		}
+		music.mute = !music.mute;
+		music.dom.muted = music.mute;
+		refreshMusicMenuItem(music.mute);
+	}
+
+	// Init the effects
+	function initEffects() {
+		effects.shoot = document.createElement('AUDIO');
+		effects.explosion = document.createElement('AUDIO');
+		effects.hit = document.createElement('AUDIO');
+		
+		effects.shoot.src = 'assets/sound/Shoot.wav';
+		effects.explosion.src = 'assets/sound/Explosion.wav';
+		effects.hit.src = 'assets/sound/Hit.wav';
+
+		effects.shoot.volume = 1.0;
+		effects.explosion.volume = 1.0;
+		effects.hit.volume = 1.0;
+	}
+
+	// Mute and unmute the effects
+	function toggleEffectsMute() {
+		effects.mute = !effects.mute;
+		effects.shoot.muted = effects.mute;
+		effects.explosion.muted = effects.mute;
+		effects.hit.muted = effects.mute;
+		refreshEffectsMenuItem(effects.mute);
 	}
 
 	// Load the hearth image
@@ -279,12 +310,21 @@ $(function() {
 		gamer.timer.second++;
 	}
 
-	// Refresh the mute menu item
-	function refreshMuteMenuItem(muted) {
+	// Refresh the music menu item
+	function refreshMusicMenuItem(muted) {
 		if(muted) {
-			$('#mute-button').text('Music OFF');
+			$('#music-button').text('Music OFF');
 		} else {
-			$('#mute-button').text('Music ON');
+			$('#music-button').text('Music ON');
+		}
+	}
+
+	// Refresh the effect menu item
+	function refreshEffectsMenuItem(muted) {
+		if(muted) {
+			$('#effects-button').text('Effects OFF');
+		} else {
+			$('#effects-button').text('Effects ON');
 		}
 	}
 
