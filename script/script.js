@@ -11,7 +11,7 @@ $(function() {
 		y: 0,			// y position
 		width: 0,		// width
 		height: 0,		// height
-		columns: 9,	// number of columns
+		columns: 9,		// number of columns
 		rows: 10,		// number of rows
 		bubble_w: 50,	// bubble image width
 		bubble_h: 50,	// bubble image height
@@ -69,6 +69,22 @@ $(function() {
 		hit: null
 	};
 
+	// Zones enum
+	var zone = {
+		list: [
+			'game-zone',
+			'welcome-zone',
+			'pause-zone',
+			'high-scores-zone',
+			'about-zone'
+		],
+		game: 0,
+		welcome: 1,
+		pause: 2,
+		highscores: 3,
+		about: 4
+	};
+
 	// Bubbles images
 	var bubbles_image = null;
 	// Boolean for check tha bubbles image load.
@@ -76,6 +92,9 @@ $(function() {
 
 	// Initialize
 	function init() {
+		// set the zone
+		selectZone(zone.welcome);
+
 		// Init the background music
 		initBackgroundMusic();
 		// Init the effects
@@ -86,7 +105,20 @@ $(function() {
 		canvas.addEventListener('click', canvasClick);
 
 		// subscribe to menu clicks
-		$('#new-game-button').on('click', newGame);
+		$('#new-game-button').on('click', function() {
+			selectZone(zone.game);
+			newGame();
+		});
+		$('#pause-button').on('click', function() {
+			selectZone(zone.pause);
+			//TODO: implement the pasue toggle swith function
+		});
+		$('#high-scores-button').on('click', function() {
+			selectZone(zone.highscores);
+		});
+		$('#about-button').on('click', function() {
+			selectZone(zone.about);
+		});
 		$('#music-button').on('click', toggleMusicMute);
 		$('#effects-button').on('click', toggleEffectsMute);
 
@@ -116,12 +148,17 @@ $(function() {
 
 		// Init the bubbles_image
 		loadBubbleImages();
+	}
 
-		// new game
-		newGame();
-
-		// Call the main loop function
-		loop();
+	// Set the selected zone
+	function selectZone(selected_zone) {
+		for(var i = 0; i < zone.list.length; i++) {
+			if(i != selected_zone) {
+				$('#' + zone.list[i]).hide();
+			} else {
+				$('#' + zone.list[i]).show();
+			}
+		}
 	}
 
 	// Init and start the background music
@@ -202,6 +239,8 @@ $(function() {
 		// Init the next and set the gamer bubble
 		nextBubble();
 		nextBubble();
+
+		loop();
 	}
 
 	// The main event loop function

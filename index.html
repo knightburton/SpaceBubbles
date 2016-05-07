@@ -9,8 +9,41 @@
 </head>
 <body>
 	<div id="wrapper">
-		<div id="game-zone">
-			<canvas id="game" width="475" height="700"></canvas>
+		<div id="zone">
+			<div id="game-zone" class="zones">
+				<canvas id="game" width="475" height="700"></canvas>
+			</div>
+			<div id="welcome-zone" class="zones">
+				<h2>Space Bubbles</h2>
+				<h3>A boring day in our galaxy...</h3>
+				<p>Click <span>New Game</span> to start.</p>
+			</div>
+			<div id="pause-zone" class="zones">
+				<h2>PAUSE</h2>
+				<p>Click <span>Play</span> to continue.</p>
+			</div>
+			<div id="high-scores-zone" class="zones">
+				<h2>High Scroes</h2>
+			</div>
+			<div id="about-zone" class="zones">
+				<h2>About</h2>
+				<p>Version: 0.5.1</p>
+				<p>Name: Space Bubbles</p>
+				<ul>
+					<p>Planets (aka. bubbles) list:</p>
+					<li>Mercury <img src="assets/img/1.png" alt="Mercury"></li>
+					<li>Venus <img src="assets/img/2.png" alt="Venus"></li>
+					<li>Earth <img src="assets/img/3.png" alt="Earth"></li>
+					<li>Mars <img src="assets/img/4.png" alt="Mars"></li>
+					<p>Special:</p>
+					<li>Sun <img src="assets/img/0.png" alt="Sun"></li>
+				</ul>
+				<p>Rules: You should know...</p>
+				<div id="licence">
+					<p>Copyright &copy; 2016 KnightBurton.</p>
+					<p>Licence: <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.</p>
+				</div>
+			</div>
 		</div>
 		<div id="aside">
 			<hgroup>
