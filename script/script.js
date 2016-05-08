@@ -632,7 +632,7 @@ $(function() {
 				effects.hit.play();
 
 				gamer.bubble.y = map.y;
-				processing = false;
+				putChains();
 			}
 			// detect other bubbles
 			for(var i = 0; i < map.columns; i++) {
