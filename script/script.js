@@ -18,16 +18,16 @@ $(function() {
 		bubble_h: 50,	// bubble image height
 		bubble_r: 25,	// bubble radius from center
 		bubble_s: 5,	// bubble split pixel
-		bubbles: [],	// 2D bubbles array
-		similar: []		// 2D array for similar bubbles
+		bubbles: []		// 2D bubbles array
 	};
 
 	// Bubble class
-	var Bubble = function(x, y, type) {
+	var Bubble = function(x, y, type, removed, same) {
 		this.x = x;				// set the bubble x position
 		this.y = y;				// set the bubble y position
 		this.type = type;		// set the bubble type
-		this.removed = false;	// set the bubble removed option
+		this.removed = removed;	// set the bubble removed option
+		this.same = same;		// set the bubble same option
 	}
 
 	// Gamre
@@ -95,6 +95,8 @@ $(function() {
 	// Boolean for mooving bubbles.
 	var processing = false;
 
+	var counter = 0;
+
 	// Initialize
 	function init() {
 		// set the zone
@@ -132,7 +134,7 @@ $(function() {
 		for(var i = 0; i < map.columns; i++) {
 			map.bubbles[i] = [];
 			for(var j = 0; j < map.rows; j++) {
-				map.bubbles[i][j] = new Bubble(i,j, -1);
+				map.bubbles[i][j] = new Bubble(i,j, -1, false, false);
 			}
 		}
 
@@ -292,13 +294,15 @@ $(function() {
 
 	// Click in the canvas
 	function canvasClick() {
-		// play the shoot effect
-		effects.shoot.play();
+		if(!processing) {
+			// play the shoot effect
+			effects.shoot.play();
 
-		gamer.bubble.x = gamer.x;
-		gamer.bubble.y = gamer.y;
-		gamer.bubble.angle = gamer.angle;
-		processing = true;
+			gamer.bubble.x = gamer.x;
+			gamer.bubble.y = gamer.y;
+			gamer.bubble.angle = gamer.angle;
+			processing = true;
+		}
 	}
 
 	// Get a random int between low and high arguments
@@ -419,12 +423,15 @@ $(function() {
 			for(var i = 0; i < map.columns; i++) {
 				var bubble = map.bubbles[i][j];
 
-				// get the current bubble position
-				var position = getBubblePosition(i, j);
-				map.bubbles[i][j].x = position.x;
-				map.bubbles[i][j].y = position.y;
-				var crop = getBubbleCrop(map.bubbles[i][j].type);
-				context.drawImage(bubbles_image, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
+				// skip the removed bubbles
+				if(!bubble.removed) {
+					// get the current bubble position
+					var position = getBubblePosition(i, j);
+					map.bubbles[i][j].x = position.x;
+					map.bubbles[i][j].y = position.y;
+					var crop = getBubbleCrop(map.bubbles[i][j].type);
+					context.drawImage(bubbles_image, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
+				}
 			}
 		}
 	}
@@ -486,6 +493,87 @@ $(function() {
 			return true;
 		}
 		return false;
+	}
+
+	// Find the same bubbles
+	function findSame(x, y) {
+		var c = 0;
+		map.bubbles[x][y].same = true;
+		for(var i = 0; i < map.columns; i++) {
+			for(var j = 0; j < map.rows; j++) {
+				if(i == x - 1 && j == y - 1) {
+					c += checkType(x, y, x - 1, y - 1);
+				}
+				if(i == x && j == y - 1) {
+					c += checkType(x, y, x, y - 1);
+				}
+				if(i == x + 1 && j == y - 1) {
+					c += checkType(x, y, x + 1, y - 1);
+				}
+
+				if(i == x - 1 && j == y) {
+					c += checkType(x, y, x - 1, y);
+				}
+				if(i == x + 1 && j == y) {
+					c += checkType(x, y, x + 1, y);
+				}
+
+				if(i == x - 1 && j == y + 1) {
+					c += checkType(x, y, x - 1, y + 1);
+				}
+				if(i == x && j == y + 1) {
+					c += checkType(x, y, x, y + 1);
+				}
+				if(i == x + 1 && j == y + 1) {
+					c += checkType(x, y, x + 1, y + 1);
+				}
+			}
+		}
+		counter += c;
+	}
+
+	//Remove tha same found bubbles
+	function removeSame() {
+		for(var i = 0; i < map.columns; i++) {
+			for(var j = 0; j < map.rows; j++) {
+				if(map.bubbles[i][j].same) {
+					map.bubbles[i][j].removed = true;
+					map.bubbles[i][j].same = false;
+					map.bubbles[i][j].type = -1;
+				}
+			}
+		}
+
+		// play explosion effect
+		effects.explosion.play();
+	}
+
+	// Reset the same bubbles
+	function resetSame() {
+		for(var i = 0; i < map.columns; i++) {
+			for(var j = 0; j < map.rows; j++) {
+				if(map.bubbles[i][j].same) {
+					map.bubbles[i][j].same = false;
+				}
+			}
+		}
+	}
+
+	// Check two bubbles type
+	function checkType(x1, y1, x2, y2) {
+		if(!map.bubbles[x2][y2].same
+		   && map.bubbles[x2][y2].type == map.bubbles[x1][y1].type
+		   && isCollide(map.bubbles[x1][y1].x,
+		   				map.bubbles[x1][y1].y,
+		   				map.bubble_r + 2,
+		   				map.bubbles[x2][y2].x,
+		   				map.bubbles[x2][y2].y,
+		   				map.bubble_r + 2)) {
+			map.bubbles[x2][y2].same = true;
+			findSame(x2,y2);
+			return 1;
+		}
+		return 0;
 	}
 
 	// Return the crop x position
@@ -551,7 +639,7 @@ $(function() {
 				for(var j = 0; j < map.rows; j++) {
 					var b = map.bubbles[i][j];
 					// ignore the removed or empty bubbles space
-					if(b.type == -1) {
+					if(b.type == -1 || b.removed) {
 						continue;
 					}
 
@@ -590,12 +678,32 @@ $(function() {
 		}
 
 		if(position.y >= map.rows) {
-			position.y = map.rows - 1; // couse of array
+			position.y = map.rows;
 		}
 
 		map.bubbles[position.x][position.y].type = gamer.bubble.type;
+		map.bubbles[position.x][position.y].removed = false;
+		map.bubbles[position.x][position.y].same = false;
+		// play the hit effect
+		effects.hit.play();
 
 		//TODO: check game over
+
+		// find the same bubbles
+		findSame(position.x, position.y, map.bubbles[position.x][position.y].type);
+
+		// remove same
+		if(counter + 1 >= 3) {
+			// wait for the sound effevt
+			setTimeout(removeSame, 400);
+		} else {
+			//reset the same options
+			resetSame();
+		}
+		counter = 0;
+
+		// get the next bubble
+		nextBubble();
 	}
 
 	init();

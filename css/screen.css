@@ -185,6 +185,10 @@ h4 {
 	color: #f00;
 }
 
+#wrapper #zone #game-zone {
+	cursor: none;
+}
+
 #wrapper #zone #welcome-zone h2 {
 	text-align: center;
 	margin: 100px 0 10px 0;
