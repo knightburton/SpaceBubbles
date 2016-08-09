@@ -1,24 +1,26 @@
 $(function() {
     // Canvas and context
-    var canvas = document.getElementById("game");   // get the canvas
-    var context = canvas.getContext("2d");          // init the context
-    var canvas_next = document.getElementById("next");  // get the next canvas
-    var context_next = canvas_next.getContext("2d");            // init the next context
+    var canvas = document.getElementById("game");           // get the canvas
+    var context = canvas.getContext("2d");                  // init the context
+    var canvas_next = document.getElementById("next");      // get the next canvas
+    var context_next = canvas_next.getContext("2d");        // init the next context
 
-    // Map
+    // Map information
     var map = {
-        x: 0,           // x position
-        y: 0,           // y position
-        width: 0,       // width
-        height: 0,      // height
-        columns: 9,     // number of columns
-        rows: 12,       // number of rows
-        downgrade: 3,   // numbers of free rows at the start
-        bubble_w: 50,   // bubble image width
-        bubble_h: 50,   // bubble image height
-        bubble_r: 25,   // bubble radius from center
-        bubble_s: 5,    // bubble split pixel
-        bubbles: []     // 2D bubbles array
+        x: 0,                   // x position
+        y: 0,                   // y position
+        width: 0,               // width
+        height: 0,              // height
+        columns: 9,             // number of columns
+        rows: 12,               // number of rows
+        downgrade: 3,           // numbers of free rows at the start
+        bubble_w: 50,           // bubble image width
+        bubble_h: 50,           // bubble image height
+        bubble_r: 25,           // bubble radius from center
+        bubble_s: 5,            // bubble split pixel
+        bubbles: [],            // 2D bubbles array
+        single_score: 10,       // a single bubble`s score
+        floating_score: 20,     // a single floating bubble`s score
     };
 
     // Bubble class
@@ -27,35 +29,36 @@ $(function() {
         this.y = y;             // set the y position
         this.type = type;       // set the type
         this.removed = removed; // set the removed option
-        this.checked = checked;
-        this.id = id;
+        this.checked = checked; // set the checked option
+        this.id = id;           // set the bubble id
     }
 
-    // Gamre
+    // Gamer information
     var gamer = {
-        x: 0,               // gamer x position
-        x: 0,               // gamer y position
-        angle: 0,           // gamer and mouse angle
-        bubble: {           // actual bubble info
-            x: 0,           // bubble x position
-            y: 0,           // bubble y position
-            angle: 0,       // bubble and mouse angle
-            speed: 10,      // bubble move speed
-            type: -1        // bubble type
+        x: 0,                   // gamer x position
+        x: 0,                   // gamer y position
+        angle: 0,               // gamer and mouse angle
+        bubble: {               // actual bubble info
+            x: 0,               // bubble x position
+            y: 0,               // bubble y position
+            angle: 0,           // bubble and mouse angle
+            speed: 10,          // bubble move speed
+            type: -1            // bubble type
         },
-        next: {             // the next bubble info
-            x: 0,           // next bubble x position
-            y: 0,           // next bubble y position
-            type: 0         // next bubble type
+        next: {                 // the next bubble info
+            x: 0,               // next bubble x position
+            y: 0,               // next bubble y position
+            type: 0             // next bubble type
         },
-        lives: 3,           // actual lives
-        max_lives: 3,       // maximum lives
-        score: 0,           // actual score,
-        level: 0,           // actual level
+        lives: 3,               // actual lives
+        max_lives: 3,           // maximum lives
+        score: 0,               // actual score,
+        level: 0,               // actual level
+        shoots: 0,              // available shoots per level
         timer: {
-            minute: 0,      // actual timer minute
-            second: 0,      // actual timer second
-            interval: null  // timer interval
+            minute: 0,          // actual timer minute
+            second: 0,          // actual timer second
+            interval: null      // timer interval
         }
     };
 
@@ -65,7 +68,7 @@ $(function() {
         dom: null
     };
 
-    // The effects object
+    // The sound effects object
     var effects = {
         mute: false,
         shoot: null,
@@ -89,40 +92,87 @@ $(function() {
         about: 4
     };
 
-    // Bubbles images
-    var bubbles_image = null;
-    // Boolean for check tha bubbles image load.
-    var loaded = false;
-    // Boolean for mooving bubbles.
+    // The bubbles [globes] type enum
+    var bubblesType = {
+        sun: 0,
+        mercury: 1,
+        venus: 2,
+        earth: 3,
+        mars: 4,
+        jupiter: 5,
+        saturn: 6
+    };
+
+    // The game status codes enum
+    var status = {
+        init: 0,
+        running: 1,
+        paused: 2,
+        game_over: 3,
+        completed: 4,
+        fail: 5
+    };
+
+    // The actual status of the game
+    var currentStatus = null;
+
+    // The bubbles image object
+    var commonImage = {
+        source: null,
+        loaded: false,
+    };
+
+    // Variable for the moving bubble.
     var processing = false;
-
+    // Array for the founded groups.
     var group = [];
+    // Temporary array for the group finder function.
     var workingArray = [];
-
+    // Counter for the bubbles id.
     var idCounter = 0;
 
-    // Initialize
+    // Initialize function
     function init() {
-        // set the zone
+        // Set the init status.
+        setStatus(status.init);
+
+        // set the welcome zone
         selectZone(zone.welcome);
 
         // Init the background music
         initBackgroundMusic();
-        // Init the effects
+        // Init the sound effects
         initEffects();
 
         // subscribe to mouse events
         canvas.addEventListener('mousemove', canvasMouseMove);
         canvas.addEventListener('click', canvasClick);
 
-        // subscribe to menu clicks
-        $('#new-game-button').on('click', function() {
-            selectZone(zone.game);
-            newGame();
-        });
-        $('#pause-button').on('click', function() {
-            selectZone(zone.pause);
-            //TODO: implement the pasue toggle swith function
+        // implements the menu items clicks
+        $('#game-control-button').on('click', function() {
+            switch(currentStatus) {
+                case status.init:
+                case status.game_over: {
+                    setStatus(status.running);
+                    selectZone(zone.game);
+                    swithGameControlButtonText("Pause");
+                    newGame();
+                } break;
+                case status.running: {
+                    setStatus(status.paused);
+                    selectZone(zone.pause);
+                    swithGameControlButtonText("Continue");
+                    // Stop the timer
+                    clearInterval(gamer.timer.interval);
+                } break;
+                case status.paused: {
+                    setStatus(status.running);
+                    selectZone(zone.game);
+                    swithGameControlButtonText("Pause");
+                    // Start the timer
+                    gamer.timer.interval = setInterval(calculateTime, 1000);
+                } break;
+            }
         });
         $('#high-scores-button').on('click', function() {
             selectZone(zone.highscores);
@@ -130,8 +180,8 @@ $(function() {
         $('#about-button').on('click', function() {
             selectZone(zone.about);
         });
-        $('#music-button').on('click', toggleMusicMute);
-        $('#effects-button').on('click', toggleEffectsMute);
+        $('#music-button').on('click', toggleMusic);
+        $('#effects-button').on('click', toggleEffects);
 
 
         // init the bubbles array
@@ -154,12 +204,12 @@ $(function() {
         gamer.next.x = 10
         gamer.next.y = 10
 
-        // Init and Refresh the hearths
+        // Init and Refresh the live hearths
         initLivesImg();
         refreshLives(gamer.lives);
 
-        // Init the bubbles_image
-        loadBubbleImages();
+        // Init the image of bubbles
+        loadCommonImages();
     }
 
     // Set the selected zone
@@ -183,7 +233,7 @@ $(function() {
     }
 
     // Mute and unmute the background music
-    function toggleMusicMute() {
+    function toggleMusic() {
         music.mute = !music.mute;
         music.dom.muted = music.mute;
         refreshMusicMenuItem(music.mute);
@@ -205,7 +255,7 @@ $(function() {
     }
 
     // Mute and unmute the effects
-    function toggleEffectsMute() {
+    function toggleEffects() {
         effects.mute = !effects.mute;
         effects.shoot.muted = effects.mute;
         effects.explosion.muted = effects.mute;
@@ -220,12 +270,12 @@ $(function() {
         return hearth;
     }
 
-    // Load the bubbles image
-    function loadBubbleImages() {
-        bubbles_image = new Image();
-        bubbles_image.src = 'assets/img/bubbles.png';
-        bubbles_image.onload = function() {
-            loaded = true;
+    // Load the image of bubbles
+    function loadCommonImages() {
+        commonImage.source = new Image();
+        commonImage.source.src = 'assets/img/bubbles.png';
+        commonImage.source.onload = function() {
+            commonImage.loaded = true;
         };
     }
 
@@ -235,15 +285,16 @@ $(function() {
         gamer.lives = 3;
         gamer.score = 0;
         gamer.level = 1;
+        gamer.shoots = 10;
         gamer.timer.minute = 0;
         gamer.timer.second = 0;
-        gamer.timer.interval = null;
+        gamer.timer.interval = setInterval(calculateTime, 1000);
 
         // refresh the stats display
         refreshLives(gamer.lives);
         refreshScore(gamer.score);
         refreshLevel(gamer.level);
-        calculateTime();
+        refreshShoots(gamer.shoots);
 
         // Create a new map
         createMap();
@@ -260,7 +311,7 @@ $(function() {
         // Animation fram for this function
         window.requestAnimationFrame(loop);
 
-        if(loaded) {
+        if(commonImage.loaded) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             renderBubbles();
             renderGamer();
@@ -333,6 +384,11 @@ $(function() {
         }
     }
 
+    // Switch the game control button text to the actual status text
+    function swithGameControlButtonText(text) {
+        $('#game-control-button').text(text);
+    }
+
     // Refresh the lives display
     function refreshLives(lives) {
         var i = gamer.max_lives;
@@ -340,6 +396,11 @@ $(function() {
             $('#' + i + '_live').css('display', 'none');
             i--;
         }
+    }
+
+    // Refresh the shoots display
+    function refreshShoots(shoots) {
+        $('#number-of-next').text(shoots);
     }
 
     // Refresh the Score display
@@ -362,6 +423,7 @@ $(function() {
 
     // Calculate the current time
     function calculateTime() {
+        gamer.timer.second++;
         if(gamer.timer.second > 59) {
             gamer.timer.minute++;
             gamer.timer.second = 0;
@@ -370,7 +432,6 @@ $(function() {
             clearInterval(gamer.timer.interval);
         }
         refreshTimeDisplay(gamer.timer.minute, gamer.timer.second);
-        gamer.timer.second++;
     }
 
     // Refresh the music menu item
@@ -394,19 +455,8 @@ $(function() {
     // Create a new random filled map
     function createMap() {
         for(var j = 0; j < map.rows - map.downgrade; j++) {
-            var randomBubble = random(1,4);
-            var counter = 0;
             for(var i = 0; i < map.columns; i++) {
-                if(counter > 2) {
-                    var newRandomBubble = random(1,4);
-                    if(newRandomBubble == randomBubble) {
-                        newRandomBubble = (newRandomBubble + 1) % 4;
-                    }
-                    randomBubble = newRandomBubble;
-                    counter = 0;
-                }
-                counter++;
-                map.bubbles[i][j].type = randomBubble;
+                map.bubbles[i][j].type = random(1,6);
             }
         }
     }
@@ -419,9 +469,12 @@ $(function() {
         gamer.bubble.x = gamer.x;
         gamer.bubble.y = gamer.y;
 
-        var nextBubbleType = random(0,4);
-
-        gamer.next.type = nextBubbleType;
+        var sun = random(1,100);
+        if(sun <= 3) {
+            gamer.next.type = 0;
+        } else {
+            gamer.next.type = random(1,6);   
+        }
     }
 
     // Render the bubbles
@@ -437,7 +490,7 @@ $(function() {
                     map.bubbles[i][j].x = position.x;
                     map.bubbles[i][j].y = position.y;
                     var crop = getBubbleCrop(map.bubbles[i][j].type);
-                    context.drawImage(bubbles_image, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
+                    context.drawImage(commonImage.source, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
                 }
             }
         }
@@ -452,7 +505,7 @@ $(function() {
             gamer.bubble.y = gamer.y;
         }
         var crop = getBubbleCrop(gamer.bubble.type);
-        context.drawImage(bubbles_image, crop, 0, map.bubble_w, map.bubble_h, gamer.bubble.x, gamer.bubble.y, map.bubble_w, map.bubble_h);
+        context.drawImage(commonImage.source, crop, 0, map.bubble_w, map.bubble_h, gamer.bubble.x, gamer.bubble.y, map.bubble_w, map.bubble_h);
     }
 
     // Render the next bubble
@@ -651,12 +704,15 @@ $(function() {
                 }
             }
         }
-        console.log(iGroups);
         
         return iGroups;
     }
 
     function removeGroup() {
+        // refresh the score
+        gamer.score += map.single_score * group.length;
+        refreshScore(gamer.score);
+
         // set every removed bubble as removed :D
         for (var i = group.length - 1; i >= 0; i--) {
             group[i].removed = true;
@@ -669,6 +725,10 @@ $(function() {
     }
 
     function removeFloatingGroup() {
+        // refresh the score
+        gamer.score += map.floating_score * group.length;
+        refreshScore(gamer.score);
+
         for (var i = group.length - 1; i >= 0; i--) {
             for (var j = group[i].length - 1; j >= 0; j--) {
                 group[i][j].removed = true;
@@ -723,10 +783,10 @@ $(function() {
                     var position = getBubblePosition(i,j);
                     if(isCollide(gamer.bubble.x + map.bubble_w / 2,
                                  gamer.bubble.y + map.bubble_h / 2,
-                                 map.bubble_r,
+                                 map.bubble_r - 3,
                                  position.x + map.bubble_w / 2,
                                  position.y + map.bubble_h / 2,
-                                 map.bubble_r)) {
+                                 map.bubble_r - 3)) {
                         putChains();
                     }
                 }
@@ -734,7 +794,7 @@ $(function() {
         }
     }
 
-    // Fix the shot bubble
+    // Fix the bubble position
     function putChains() {
         processing = false;
         // get the bubble's current center position
@@ -757,6 +817,12 @@ $(function() {
             position.y = map.rows;
         }
 
+        // If this is the last + 1 line, end of round
+        if(position.y == map.rows) {
+            setStatus(status.fail);
+            return;
+        }
+
         var realPosition = getBubblePosition(position.x, position.y);
         map.bubbles[position.x][position.y].x = realPosition.x;
         map.bubbles[position.x][position.y].y = realPosition.y;
@@ -767,25 +833,66 @@ $(function() {
         // play the hit effect
         effects.hit.play();
 
-        // find the same type of bubbles
-        group = findGroup(position.x, position.y, true);
+        paladin(map.bubbles[position.x][position.y]);
+
+        gamer.shoots--;
+        if(gamer.shoots == 0) {
+            setStatus(status.fail);
+        } else {
+            refreshShoots(gamer.shoots);
+        }
+
+        // get the next bubble
+        nextBubble();
+    }
+
+    // Collects the groups, floating groups and removes them.
+    // Sets the score and the next bubble.
+    function paladin(bubble) {
+        position = getMatrixPosition(bubble.x, bubble.y);
+
+        if(bubble.type == bubblesType.sun) {
+            group = getNeighbours(position.x, position.y);
+        } else {
+            // try to find the same type of bubbles
+            group = findGroup(position.x, position.y, true);
+        }
 
         // check the workingArray length for remove
-        if(group.length >= 3) {
-            console.log("SCORE!");
+        if(group.length >= 3 || bubble.type == bubblesType.sun) {
             // remove the group from the map
             removeGroup();
             // search and remove the floating groups
             group = findFloatingGroup();
-            removeFloatingGroup();
+            if(group.length > 0) {
+                removeFloatingGroup();
+            } else {
+                resetChecked();
+            }
         } else {
             resetChecked();
         }
+    }
 
-        //TODO: check game over
+    // Set the game status
+    function setStatus(s) {
+        currentStatus = s;
+        switch(s) {
+            case status.game_over: {
 
-        // get the next bubble
-        nextBubble();
+            } break;
+            case status.done: {
+
+            } break;
+            case status.fail: {
+                gamer.lives--;
+                if(gamer.lives <= 0) {
+                    setStatus(status.game_over);
+                } else {
+                    //TODO: reset the tound.
+                }
+            } break;
+        }
     }
 
     init();

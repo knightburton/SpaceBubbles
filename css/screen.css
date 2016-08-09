@@ -137,6 +137,14 @@ h4 {
 	color: #f00;
 }
 
+#wrapper #aside #game-menu ul li#music-button {
+	margin-top: 15px;
+}
+
+#wrapper #aside #game-menu ul li#effects-button {
+	margin-bottom: 15px;
+}
+
 #wrapper #aside #game-next {
 	position: relative;
 	width: 190px;
