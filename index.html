@@ -22,15 +22,25 @@
 				<h2>PAUSE</h2>
 				<p>Select <span>Continue</span> to play.</p>
 			</div>
+			<div id="game-over-zone" class="zones">
+				<h2>GAME OVER</h2>
+				<p>Select <span>Restart</span> to try again.</p>
+			</div>
+			<div id="complete-zone" class="zones">
+				<h2>CONGRATULATION!</h2>
+				<p>Level <span id="congratulation-level-span">0</span> completed.</p>
+				<p>Score: <span id="congratulation-score-span">0</span>.</p>
+				<p>Time: <span id="congratulation-time-span">0</span>.</p>
+			</div>
 			<div id="high-scores-zone" class="zones">
-				<h2>High Scroes</h2>
+				<h2>High Scores</h2>
 			</div>
 			<div id="about-zone" class="zones">
 				<h2>About</h2>
 				<p>Version: 0.6.0</p>
 				<p>Name: Space Bubbles</p>
 				<ul>
-					<p>Planets (aka. bubbles) list:</p>
+					<p>Planets list:</p>
 					<li>Mercury <img src="assets/img/1.png" alt="Mercury"></li>
 					<li>Venus <img src="assets/img/2.png" alt="Venus"></li>
 					<li>Earth <img src="assets/img/3.png" alt="Earth"></li>
@@ -46,6 +56,9 @@
 					<p>Copyright &copy; 2016 KnightBurton.</p>
 					<p>Licence: <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.</p>
 				</div>
+			</div>
+			<div id="oops-zone" class="zones">
+				<h2>Ooops!</h2>
 			</div>
 		</div>
 		<div id="aside">
@@ -67,11 +80,11 @@
 				<h2>Menu</h2>
 				<ul>
 					<li id="game-control-button">New Game</li>
-					<li id="high-scores-button">High Scores</li>
-					<li id="about-button">About</li>
+					<li id="high-scores-button" class="navigation-button">High Scores</li>
+					<li id="about-button" class="navigation-button">About</li>
 					<li id="music-button">Music ON</li>
 					<li id="effects-button">Effects ON</li>
-					<li id="code-button"><a target="_blank" href="https://github.com/knightburton/SpaceBubbles">Code</a></li>
+					<li id="reset-button">Reset</li>
 				</ul>
 			</div>
 			<div id="game-next">

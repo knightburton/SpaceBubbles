@@ -36,10 +36,14 @@ h4 {
 }
 
 #wrapper {
-	position: relative;
 	width: 695px;
 	height: 710px;
-	margin: 0 auto 0 auto;
+	margin: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
 }
 
 #wrapper #aside {
@@ -145,6 +149,11 @@ h4 {
 	margin-bottom: 15px;
 }
 
+#wrapper #aside #game-menu ul li.disable-navigation-button {
+	pointer-events: none;
+	opacity: 0.3;
+}
+
 #wrapper #aside #game-next {
 	position: relative;
 	width: 190px;
@@ -189,13 +198,26 @@ h4 {
 	display: none;
 }
 
+#wrapper #zone .zones h2 {
+	text-align: center;
+	margin: 200px 0 10px 0;
+	font-size: 25px;
+	color: #f00;
+}
+
+#wrapper #zone .zones p {
+	text-align: center;
+	margin: 10px 0 0 0;
+	font-size: 12px;
+}
+
 #wrapper #zone .zones p span {
 	color: #f00;
 }
 
 #wrapper #zone #welcome-zone h2 {
 	text-align: center;
-	margin: 100px 0 10px 0;
+	margin: 200px 0 10px 0;
 	font-size: 30px;
 }
 
@@ -212,10 +234,7 @@ h4 {
 }
 
 #wrapper #zone #pause-zone h2 {
-	text-align: center;
-	margin: 200px 0 10px;
 	font-size: 40px;
-	color: #f00;
 }
 
 #wrapper #zone #pause-zone p {
