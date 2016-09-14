@@ -7,7 +7,7 @@
 	<script src="script/script.js"></script>
 	<link rel="stylesheet" href="css/screen.css">
 </head>
-<body>
+<body id="fullscreen-body">
 	<div id="wrapper">
 		<div id="zone">
 			<div id="game-zone" class="zones">
@@ -29,33 +29,86 @@
 			<div id="complete-zone" class="zones">
 				<h2>CONGRATULATION!</h2>
 				<p>Level <span id="congratulation-level-span">0</span> completed.</p>
-				<p>Score: <span id="congratulation-score-span">0</span>.</p>
-				<p>Time: <span id="congratulation-time-span">0</span>.</p>
+				<p>Score: <span id="congratulation-score-span">0</span></p>
+				<p>Time: <span id="congratulation-time-span">0</span></p>
 			</div>
 			<div id="high-scores-zone" class="zones">
 				<h2>High Scores</h2>
 			</div>
 			<div id="about-zone" class="zones">
 				<h2>About</h2>
-				<p>Version: 0.6.0</p>
-				<p>Name: Space Bubbles</p>
-				<ul>
-					<p>Planets list:</p>
-					<li>Mercury <img src="assets/img/1.png" alt="Mercury"></li>
-					<li>Venus <img src="assets/img/2.png" alt="Venus"></li>
-					<li>Earth <img src="assets/img/3.png" alt="Earth"></li>
-					<li>Mars <img src="assets/img/4.png" alt="Mars"></li>
-					<p>Special:</p>
-					<li>Sun (AoE)<img src="assets/img/0.png" alt="Sun"></li>
-				</ul>
-				<p>Rules: You should know...</p>
-				<p>Music: <a href="https://youtu.be/UBVoONryE3s">Most awesome 8-bit song ever</a><p>
-				<p>Effects: <a href="http://www.bfxr.net/">www.bfxr.net</a></p>
-				<p>Font: <a href="https://fontlibrary.org/en/font/press-start-2p">Press start 2p</a></p>
-				<div id="licence">
-					<p>Copyright &copy; 2016 KnightBurton.</p>
-					<p>Licence: <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.</p>
-				</div>
+				<table>
+					<tr>
+						<td colspan="2">
+							Version: 0.7.0
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							Name: Space Bubbles
+						</td>
+					</tr>
+					<tr class="table-tr-hegiht">
+						<td colspan="2" class="table-center">
+							Planets list
+						</td>
+					</tr>
+					<tr>
+						<td>Mercury</td>
+						<td><img src="assets/img/1.png" alt="Mercury" title="Mercury"></td>
+					</tr>
+					<tr>
+						<td>Venus</td>
+						<td><img src="assets/img/2.png" alt="Venus" title="Venus"></td>
+					</tr>
+					<tr>
+						<td>Earth</td>
+						<td><img src="assets/img/3.png" alt="Earth" title="Earth"></td>
+					</tr>
+					<tr>
+						<td>Mars</td>
+						<td><img src="assets/img/4.png" alt="Mars" title="Mars"></td>
+					</tr>
+					<tr>
+						<td>Jupiter</td>
+						<td> <img src="assets/img/5.png" alt="Jupiter" title="Jupiter"></td>
+					</tr>
+					<tr>
+						<td>Uranus</td>
+						<td><img src="assets/img/6.png" alt="Uranus" title="Uranus"></td>
+					</tr>
+					<tr class="table-tr-hegiht">
+						<td colspan="2" class="table-center">
+							Special
+						</td>
+					</tr>
+					<tr>
+						<td>Sun (AoE)</td>
+						<td><img src="assets/img/0.png" alt="Sun" title="Sun"></td>
+					</tr>
+					<tr class="table-tr-hegiht">
+						<td colspan="2">Rules: You should know...</td>
+					</tr>
+					<tr>
+						<td colspan="2">Music: <a href="https://youtu.be/UBVoONryE3s">Most awesome 8-bit song ever</a></td>
+					</tr>
+					<tr>
+						<td colspan="2">Effects: <a href="http://www.bfxr.net/">www.bfxr.net</a></td>
+					</tr>
+					<tr>
+						<td colspan="2">Font: <a href="https://fontlibrary.org/en/font/press-start-2p">Press start 2p</a></td>
+					</tr>
+					<tr class="table-tr-hegiht">
+						<td colspan="2">
+							Copyright &copy; 2016 KnightBurton.
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							Licence: <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.
+						</td>
+					</tr>
+				</table>
 			</div>
 			<div id="oops-zone" class="zones">
 				<h2>Ooops!</h2>
@@ -84,6 +137,7 @@
 					<li id="about-button" class="navigation-button">About</li>
 					<li id="music-button">Music ON</li>
 					<li id="effects-button">Effects ON</li>
+					<li id="fullscreen-button">Fullscreen OFF</li>
 					<li id="reset-button">Reset</li>
 				</ul>
 			</div>

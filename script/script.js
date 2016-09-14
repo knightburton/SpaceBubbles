@@ -5,60 +5,65 @@ $(function() {
     var canvas_next = document.getElementById("next");      // get the next canvas
     var context_next = canvas_next.getContext("2d");        // init the next context
 
+    // A single bubble x,y size in pixel
+    var bubbleSize = 50;
+
     // Map information
     var map = {
-        x: 0,                   // x position
-        y: 0,                   // y position
-        width: 0,               // width
-        height: 0,              // height
-        columns: 9,             // number of columns
-        rows: 12,               // number of rows
-        downgrade: 3,           // numbers of free rows at the start
-        bubble_w: 50,           // bubble image width
-        bubble_h: 50,           // bubble image height
-        bubble_r: 25,           // bubble radius from center
-        bubble_s: 5,            // bubble split pixel
-        bubbles: [],            // 2D bubbles array
-        single_score: 10,       // a single bubble`s score
-        floating_score: 20,     // a single floating bubble`s score
+        x: 0,                       // x position
+        y: 0,                       // y position
+        width: 0,                   // width
+        height: 0,                  // height
+        columns: 9,                 // number of columns
+        rows: 12,                   // number of rows
+        downgrade: 3,               // numbers of free rows at the start
+        bubble_w: bubbleSize,       // bubble image width
+        bubble_h: bubbleSize,       // bubble image height
+        bubble_r: 25,               // bubble radius from center
+        bubble_s: 5,                // bubble split pixel
+        bubbles: [],                // 2D bubbles array
+        single_score: 3,            // a single bubble`s score
+        floating_score: 5,          // a single floating bubble`s score
+        shoot_score: 15,            // a single unused move score
     };
 
     // Bubble class
-    var Bubble = function(x, y, type, removed, checked, id) {
-        this.x = x;             // set the x position
-        this.y = y;             // set the y position
-        this.type = type;       // set the type
-        this.removed = removed; // set the removed option
-        this.checked = checked; // set the checked option
-        this.id = id;           // set the bubble id
+    var Bubble = function(x, y, type, assigned, removed, checked, id) {
+        this.x = x;                 // set the x position
+        this.y = y;                 // set the y position
+        this.type = type;           // set the type
+        this.assigned = assigned;   // set the assigned option
+        this.removed = removed;     // set the removed option
+        this.checked = checked;     // set the checked option
+        this.id = id;               // set the bubble id
     }
 
     // Gamer information
     var gamer = {
-        x: 0,                   // gamer x position
-        x: 0,                   // gamer y position
-        angle: 0,               // gamer and mouse angle
-        bubble: {               // actual bubble info
-            x: 0,               // bubble x position
-            y: 0,               // bubble y position
-            angle: 0,           // bubble and mouse angle
-            speed: 10,          // bubble move speed
-            type: -1            // bubble type
+        x: 0,                       // gamer x position
+        x: 0,                       // gamer y position
+        angle: 0,                   // gamer and mouse angle
+        bubble: {                   // actual bubble info
+            x: 0,                   // bubble x position
+            y: 0,                   // bubble y position
+            angle: 0,               // bubble and mouse angle
+            speed: 10,              // bubble move speed
+            type: -1                // bubble type
         },
-        next: {                 // the next bubble info
-            x: 0,               // next bubble x position
-            y: 0,               // next bubble y position
-            type: 0             // next bubble type
+        next: {                     // the next bubble info
+            x: 0,                   // next bubble x position
+            y: 0,                   // next bubble y position
+            type: 0                 // next bubble type
         },
-        lives: 3,               // actual lives
-        score: 0,               // actual score,
-        level: 0,               // actual level
-        shoots: 0,              // available shoots per level
-        availableBubbles: 0,    // available bubbles number on the map
+        lives: 3,                   // actual lives
+        score: 0,                   // actual score,
+        level: 0,                   // actual level
+        shoots: 0,                  // available shoots per level
+        availableBubbles: 0,        // available bubbles number on the map
         timer: {
-            minute: 0,          // actual timer minute
-            second: 0,          // actual timer second
-            interval: null      // timer interval
+            minute: 0,              // actual timer minute
+            second: 0,              // actual timer second
+            interval: null          // timer interval
         }
     };
 
@@ -75,6 +80,9 @@ $(function() {
         explosion: null,
         hit: null
     };
+
+    // Fullscreen indicator
+    var isFullscreen = false;
 
     // The bubbles image object
     var commonImage = {
@@ -105,7 +113,7 @@ $(function() {
     };
 
     // The bubbles [globes] type enum
-    var bubblesType = {
+    var bubbleTypes = {
         none: -1,
         sun: 0,
         mercury: 1,
@@ -128,16 +136,20 @@ $(function() {
 
     // The actual status of the game
     var currentStatus = null;
-    // Variable for the moving bubble.
+    // Variable for the moving bubble
     var processing = false;
     // Requested animation frame
     var animationID = null;
-    // Array for the founded groups.
+    // Array for the founded groups
     var group = [];
-    // Temporary array for the group finder function.
+    // Temporary array for the group finder function
     var workingArray = [];
-    // Counter for the bubbles id.
+    // Counter for the bubbles id
     var idCounter = 0;
+    // Bubble animation - reduction
+    var bar = 0;
+    // Bubble animation - enable
+    var removeAnimation = false;
 
     // Variables for animationFrame fps controlling
     var fps, fpsInterval, now, then, elapsed;
@@ -189,6 +201,18 @@ $(function() {
             }
         });
 
+        $('#high-scores-button').on('click', function() {
+            selectZone(zone.highscores);
+        });
+
+        $('#about-button').on('click', function() {
+            selectZone(zone.about);
+        });
+
+        $('#music-button').on('click', toggleMusic);
+
+        $('#effects-button').on('click', toggleEffects);
+
         $('#reset-button').on('click', function() {
             if(currentStatus != status.init) {
                 reset();
@@ -199,16 +223,37 @@ $(function() {
             }
         });
 
-        $('#high-scores-button').on('click', function() {
-            selectZone(zone.highscores);
-        });
+        $('#fullscreen-button').on('click', function() {
+            var elem = document.documentElement;
+            if ((document.fullScreenElement !== undefined && document.fullScreenElement === null)
+                || (document.msFullscreenElement !== undefined && document.msFullscreenElement === null)
+                || (document.mozFullScreen !== undefined && !document.mozFullScreen)
+                || (document.webkitIsFullScreen !== undefined && !document.webkitIsFullScreen))
+            {
+                if (elem.requestFullScreen) {
+                    elem.requestFullScreen();
+                } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullScreen) {
+                    elem.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                if (document.cancelFullScreen) {
+                    document.cancelFullScreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitCancelFullScreen) {
+                    document.webkitCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
 
-        $('#about-button').on('click', function() {
-            selectZone(zone.about);
+            isFullscreen = !isFullscreen;
+            refreshFullscreenMenuItem(isFullscreen);
         });
-
-        $('#music-button').on('click', toggleMusic);
-        $('#effects-button').on('click', toggleEffects);
 
         // init the bubbles array
         for(var i = 0; i < map.columns; i++) {
@@ -363,6 +408,7 @@ $(function() {
         // Animation fram for this function
         animationID = requestAnimationFrame(loop);
 
+        // dates for the fps calculation
         now = Date.now();
         elapsed = now - then;
 
@@ -517,6 +563,15 @@ $(function() {
         }
     }
 
+    // Refresh the fullscren menu item
+    function refreshFullscreenMenuItem(enabled) {
+        if(enabled) {
+            $('#fullscreen-button').text('Fullscreen ON');
+        } else {
+            $('#fullscreen-button').text('Fullscreen OFF');
+        }
+    }
+
     // Reset, back to the welcome page
     function reset() {
         resetChecked();
@@ -529,7 +584,7 @@ $(function() {
         gamer.timer.second = 0;
         gamer.shoots = 0;
         gamer.availableBubbles = 0;
-        gamer.next.type = bubblesType.none;
+        gamer.next.type = bubbleTypes.none;
         refreshLives(gamer.lives);
         refreshLevel(gamer.level);
         refreshScore(gamer.score);
@@ -551,6 +606,7 @@ $(function() {
     // Init the next bubbles
     function nextBubble() {
         gamer.bubble.type = gamer.next.type;
+        gamer.bubble.assigned = false;
         gamer.bubble.removed = false;
         gamer.bubble.checked = false;
         gamer.bubble.x = gamer.x;
@@ -566,18 +622,35 @@ $(function() {
 
     // Render the bubbles
     function renderBubbles() {
+        if(bar >= bubbleSize) {
+            bar = 0;
+            removeAnimation = false;
+        } else if(removeAnimation) {
+            bar++;
+        }
+
         for(var j = 0; j < map.rows; j++) {
             for(var i = 0; i < map.columns; i++) {
                 var bubble = map.bubbles[i][j];
 
-                // skip the removed bubbles
-                if(!bubble.removed) {
-                    // get the current bubble position
-                    var position = getBubblePosition(i, j);
-                    map.bubbles[i][j].x = position.x;
-                    map.bubbles[i][j].y = position.y;
-                    var crop = getBubbleCrop(map.bubbles[i][j].type);
+                // get the current bubble position
+                var position = getBubblePosition(i, j);
+                bubble.x = position.x;
+                bubble.y = position.y;
+                // get the cropped posiiton
+                var crop = getBubbleCrop(map.bubbles[i][j].type);
+
+                if(bubble.assigned) {
+                    // bubble animation
+                    if(bar >= bubbleSize) {
+                        bubble.assigned = false;
+                        bubble.removed = true;
+                    }
+                    context.drawImage(commonImage.source, crop, 0, map.bubble_w, map.bubble_h, position.x + bar/2, position.y + bar/2, map.bubble_w - bar, map.bubble_h - bar);
+                } else if(!bubble.removed) {
                     context.drawImage(commonImage.source, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
+                } else {
+                    continue;
                 }
             }
         }
@@ -744,10 +817,11 @@ $(function() {
                 continue;
             }
 
-            // skip the removed places
-            if(currentBubble.removed) {
+            // skip the removed or assigned places
+            if(currentBubble.removed || currentBubble.assigned) {
                 continue;
             }
+
 
             if(!match || (currentBubble.type == bubble.type)) {
                 // addthe current bubble to the tGroup
@@ -810,6 +884,9 @@ $(function() {
     }
 
     function removeGroup() {
+        // Enable the remove animation
+        removeAnimation = true;
+
         // refresh the score
         gamer.score += map.single_score * group.length;
         refreshScore(gamer.score);
@@ -817,9 +894,9 @@ $(function() {
         // refresh tha available bubbles
         gamer.availableBubbles -= group.length;
 
-        // set every removed bubble as removed :D
+        // set every bubble as assigned to remove
         for (var i = group.length - 1; i >= 0; i--) {
-            group[i].removed = true;
+            group[i].assigned = true;
         }
 
         resetChecked();
@@ -829,6 +906,9 @@ $(function() {
     }
 
     function removeFloatingGroup() {
+        // Enable the remove animation
+        removeAnimation = true;
+
         // refresh the score
         gamer.score += map.floating_score * group.length;
         refreshScore(gamer.score);
@@ -836,8 +916,9 @@ $(function() {
         for (var i = group.length - 1; i >= 0; i--) {
             // refresh the available bubbles
             gamer.availableBubbles -= group[i].length;
+            // set every bubble in the inner array as assigned
             for (var j = group[i].length - 1; j >= 0; j--) {
-                group[i][j].removed = true;
+                group[i][j].assigned = true;
             }
         }
 
@@ -937,6 +1018,7 @@ $(function() {
         map.bubbles[position.x][position.y].x = realPosition.x;
         map.bubbles[position.x][position.y].y = realPosition.y;
         map.bubbles[position.x][position.y].type = gamer.bubble.type;
+        map.bubbles[position.x][position.y].assigned = false;
         map.bubbles[position.x][position.y].removed = false;
         map.bubbles[position.x][position.y].checked = false;
 
@@ -960,15 +1042,21 @@ $(function() {
     function paladin(bubble) {
         position = getMatrixPosition(bubble.x, bubble.y);
 
-        if(bubble.type == bubblesType.sun) {
+        // special effect
+        if(bubble.type == bubbleTypes.sun) {
+            // always remove the sun bubble
+            bubble.assigned = true;
+            bubble.checked = true;
+            gamer.availableBubbles--;
+
             group = getNeighbours(position.x, position.y);
         } else {
             // try to find the same type of bubbles
             group = findGroup(position.x, position.y, true);
         }
 
-        // check the workingArray length for remove
-        if(group.length >= 3 || bubble.type == bubblesType.sun) {
+        // check the workingArray length for remove or the sun is coming
+        if(group.length >= 3 || bubble.type == bubbleTypes.sun) {
             // remove the group from the map
             removeGroup();
             // search and remove the floating groups
@@ -1002,10 +1090,15 @@ $(function() {
                 selectZone(zone.complete);
                 clearInterval(gamer.timer.interval);
 
+                // Convert to unused moves into score
+                gamer.score += gamer.shoots * map.shoot_score;
+                refreshScore(gamer.score);
+                refreshShoots(0);
+
                 // change the Complete zone stats
                 $("#congratulation-level-span").text(gamer.level);
                 $("#congratulation-score-span").text(gamer.score);
-                $("#congratulation-time-span").text(gamer.timer.minute + "min " + gamer.timer.second + "sec");
+                $("#congratulation-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
 
                 //TODO: implement the new level action
             } break;

@@ -54,6 +54,9 @@ h4 {
 	height: 710px;
 }
 
+/*
+*	TITLE BOX
+*/
 #wrapper #aside h1 {
 	margin: 2px 5px 5px 5px;
 }
@@ -80,6 +83,9 @@ h4 {
 	background-color: #000;
 }
 
+/*
+*	STATISTIC BOX
+*/
 #wrapper #aside #game-stats {
 	position: relative;
 	width: 190px;
@@ -116,6 +122,9 @@ h4 {
 	text-align: center;
 }
 
+/*
+*	MENU BOX
+*/
 #wrapper #aside #game-menu {
 	position: relative;
 	width: 190px;
@@ -128,12 +137,14 @@ h4 {
 #wrapper #aside #game-menu ul {
 	position: relative;
 	margin: 30px 0 0 0;
+	padding: 0 0 0 10px;
 }
 
 #wrapper #aside #game-menu ul li {
 	list-style: none;
-	font-size: 13px;
-	margin: 5px 0 5px -10px;
+	font-size: 12px;
+	margin: 5px;
+	padding: 0;
 	cursor: pointer;
 }
 
@@ -142,11 +153,11 @@ h4 {
 }
 
 #wrapper #aside #game-menu ul li#music-button {
-	margin-top: 15px;
+	margin-top: 10px;
 }
 
-#wrapper #aside #game-menu ul li#effects-button {
-	margin-bottom: 15px;
+#wrapper #aside #game-menu ul li#fullscreen-button {
+	margin-bottom: 20px;
 }
 
 #wrapper #aside #game-menu ul li.disable-navigation-button {
@@ -154,6 +165,9 @@ h4 {
 	opacity: 0.3;
 }
 
+/*
+*	NEXT BUBBLE BOX
+*/
 #wrapper #aside #game-next {
 	position: relative;
 	width: 190px;
@@ -178,6 +192,10 @@ h4 {
 	text-align: center;
 }
 
+
+/*
+*	ZONES
+*/
 #wrapper #zone {
 	position: absolute;
 	top: 0;
@@ -215,6 +233,7 @@ h4 {
 	color: #f00;
 }
 
+/* Welcome */
 #wrapper #zone #welcome-zone h2 {
 	text-align: center;
 	margin: 200px 0 10px 0;
@@ -233,6 +252,7 @@ h4 {
 	font-size: 12px;
 }
 
+/* Pause */
 #wrapper #zone #pause-zone h2 {
 	font-size: 40px;
 }
@@ -243,54 +263,34 @@ h4 {
 	font-size: 12px; 
 }
 
+/* High scores */
 #wrapper #zone #high-scores-zone h2 {
 	text-align: center;
 	margin: 10px 0 10px 0;
 	font-size: 30px;
 }
 
+/* About */
 #wrapper #zone #about-zone h2 {
 	text-align: center;
 	margin: 10px 0 20px 0;
 	font-size: 30px;
 }
 
-#wrapper #zone #about-zone p {
+#wrapper #zone #about-zone table {
+	margin: 0 10px 0 10px;
 	font-size: 12px;
-	margin: 5px 0 5px 15px;
 }
 
-#wrapper #zone #about-zone p a {
+#wrapper #zone #about-zone table a {
 	text-decoration: underline;
 }
 
-#wrapper #zone #about-zone ul {
-	margin: 40px 0 40px -40px;
+#wrapper #zone #about-zone table .table-center {
+	text-align: center;
 }
 
-#wrapper #zone #about-zone ul li {
-	position: relative;
-	height: 60px;
-	line-height: 60px;
-	margin: 5px 0 5px 50px;
-	font-size: 12px;
-	display: block;
-}
-
-#wrapper #zone #about-zone ul li img {
-	position: absolute;
-	top: 0;
-	left: 120px;
-}
-
-#wrapper #zone #about-zone #licence {
-	position: absolute;
-	width: inherit;
-	height: 30px;
-	bottom: 20px;
-	left: 0;
-}
-
-#wrapper #zone #about-zone #licence p a {
-	text-decoration: underline;
+#wrapper #zone #about-zone table .table-tr-hegiht {
+	height: 35px;
+	vertical-align: bottom;
 }
