@@ -60,6 +60,7 @@ $(function() {
         level: 0,                   // actual level
         shoots: 0,                  // available shoots per level
         availableBubbles: 0,        // available bubbles number on the map
+        missedGroups: 0,            // counter for the missed default or floated group
         timer: {
             minute: 0,              // actual timer minute
             second: 0,              // actual timer second
@@ -150,6 +151,10 @@ $(function() {
     var bar = 0;
     // Bubble animation - enable
     var removeAnimation = false;
+    // hardmode indicator
+    var hardmode = false;
+    // inserted new row counter
+    var insertCounter = 0;
 
     // Variables for animationFrame fps controlling
     var fps, fpsInterval, now, then, elapsed;
@@ -585,19 +590,38 @@ $(function() {
         gamer.shoots = 0;
         gamer.availableBubbles = 0;
         gamer.next.type = bubbleTypes.none;
+        gamer.missedGroups = 0;
         refreshLives(gamer.lives);
         refreshLevel(gamer.level);
         refreshScore(gamer.score);
         refreshTimeDisplay(gamer.timer.minute, gamer.timer.minute);
         clearInterval(gamer.timer.interval);
         refreshShoots(gamer.shoots);
+        hardmode = false;
+        insertCounter = 0;
     }
 
     // Create a new random filled map
     function createMap() {
+        var easy = bubbleTypes.none;
         for(var j = 0; j < map.rows - map.downgrade; j++) {
             for(var i = 0; i < map.columns; i++) {
-                map.bubbles[i][j].type = random(1,6);
+                var bubble = map.bubbles[i][j];
+                if(gamer.level <= 2) {
+                    if(i % 2 == 0) {
+                        var tmp = random(1, 6);
+                        while(easy == tmp) {
+                            tmp = random(1, 6);
+                        }
+                        easy = tmp;
+                    }
+                    bubble.type = easy;
+                } else if(gamer.level <= 4) {
+                    bubble.type = random(1, 6);
+                } else {
+                    hardmode = true;
+                    bubble.type = random(1, 6);
+                }
                 gamer.availableBubbles++;
             }
         }
@@ -711,7 +735,13 @@ $(function() {
     function getBubblePosition(column, row) {
         var x = map.x + column * map.bubble_w;
         
-        if((row + 1) % 2) {
+        var indent = 1;
+
+        if(insertCounter % 2) {
+            indent = 0;
+        }
+
+        if((row + 1) % 2 == indent) {
             x += map.bubble_w / 2;
         }
 
@@ -723,8 +753,14 @@ $(function() {
     function getMatrixPosition(x, y) {
         var my = Math.floor((y - map.y) / (map.bubble_h - map.bubble_s));
 
+        var indent = 1;
+
+        if(insertCounter % 2) {
+            indent = 0;
+        }
+
         var xoffset = 0;
-        if((my + 1) % 2) {
+        if((my + 1) % 2 == indent) {
             xoffset = map.bubble_w / 2;
         }
 
@@ -746,7 +782,13 @@ $(function() {
     // Returns the selected bubble neighbours in an array
     function getNeighbours(x, y) {
         var neighbours = [];
+
         var indent = (y + 1) % 2;
+
+        if(insertCounter % 2) {
+            indent = (indent == 0) ? 1 : 0;
+        }
+
         var index = [
             [[ 1,0], [0, 1], [-1, 1], [-1,0], [-1,-1], [0,-1]],
             [[-1,0], [0,-1], [ 1,-1], [ 1,0], [ 1, 1], [0, 1]],
@@ -799,6 +841,22 @@ $(function() {
             for (var i = 0; i < map.columns; i++) {
                 map.bubbles[i][j].type = -1;
             }
+        }
+    }
+    
+    function insertNewRow() {
+        insertCounter++;
+        for (var i = 0; i < map.columns; i++) {
+            for (var j = 0; j < map.rows - 1; j++) {
+               map.bubbles[i][map.rows -1 -j].type = map.bubbles[i][map.rows -1 -j -1].type;
+               map.bubbles[i][map.rows -1 -j].checked = map.bubbles[i][map.rows -1 -j -1].checked;
+               map.bubbles[i][map.rows -1 -j].assigned = map.bubbles[i][map.rows -1 -j -1].assigned;
+               map.bubbles[i][map.rows -1 -j].removed = map.bubbles[i][map.rows -1 -j -1].removed;
+            }
+        }
+
+        for (var i = 0; i < map.columns; i++) {
+            map.bubbles[i][0].type = random(1, 6);
         }
     }
 
@@ -1057,6 +1115,8 @@ $(function() {
 
         // check the workingArray length for remove or the sun is coming
         if(group.length >= 3 || bubble.type == bubbleTypes.sun) {
+            // set 0 to the missedGroup
+            gamer.missedGroups = 0;
             // remove the group from the map
             removeGroup();
             // search and remove the floating groups
@@ -1067,6 +1127,13 @@ $(function() {
                 resetChecked();
             }
         } else {
+            if(hardmode) {
+                gamer.missedGroups++;
+                if(gamer.missedGroups >= 5) {
+                    gamer.missedGroups = 0;
+                    insertNewRow();
+                }
+            }
             resetChecked();
         }
 
