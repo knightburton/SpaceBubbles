@@ -15,8 +15,8 @@ $(function() {
         width: 0,                   // width
         height: 0,                  // height
         columns: 9,                 // number of columns
-        rows: 12,                   // number of rows
-        downgrade: 3,               // numbers of free rows at the start
+        rows: 13,                   // number of rows
+        downgrade: 4,               // numbers of free rows at the start
         bubble_w: bubbleSize,       // bubble image width
         bubble_h: bubbleSize,       // bubble image height
         bubble_r: 25,               // bubble radius from center
@@ -134,6 +134,9 @@ $(function() {
         completed: 4,
         fail: 5
     };
+
+    // global score
+    var globalScore = 0;
 
     // The actual status of the game
     var currentStatus = null;
@@ -375,7 +378,7 @@ $(function() {
         // reset the stats
         gamer.lives = 3;
         gamer.score = 0;
-        gamer.level = 1;
+        gamer.level = 5;
         gamer.shoots = 120;
         gamer.availableBubbles = 0;
         gamer.timer.minute = 0;
@@ -601,6 +604,22 @@ $(function() {
         insertCounter = 0;
     }
 
+    function resetLevel() {
+        resetChecked();
+        resetType();
+        resetRemoved();
+        gamer.shoots = 120 - (gamer.level * 5);
+        refreshShoots(gamer.shoots);
+        gamer.availableBubbles = 0;
+        gamer.missedGroups = 0;
+        gamer.score = globalScore;
+        refreshScore(gamer.score);
+        insertCounter = 0;
+        createMap();
+        nextBubble();
+        nextBubble();
+    }
+
     // Create a new random filled map
     function createMap() {
         var easy = bubbleTypes.none;
@@ -726,8 +745,8 @@ $(function() {
         context.lineWidth = 1;
         context.strokeStyle = '#00ff00';
         context.beginPath();
-        context.moveTo(0, (canvas.height - 150));
-        context.lineTo(canvas.width, (canvas.height - 150));
+        context.moveTo(0, (canvas.height - 155));
+        context.lineTo(canvas.width, (canvas.height - 155));
         context.stroke();
     }
 
@@ -1021,8 +1040,8 @@ $(function() {
             for(var i = 0; i < map.columns; i++) {
                 for(var j = 0; j < map.rows; j++) {
                     var b = map.bubbles[i][j];
-                    // ignore the removed or empty bubbles space
-                    if(b.type == -1 || b.removed) {
+                    // ignore the removed or empty or assigned for remove bubbles space
+                    if(b.type == -1 || b.removed || b.assigned) {
                         continue;
                     }
 
@@ -1063,14 +1082,8 @@ $(function() {
             position.y = map.rows;
         }
 
-        // If this is the last + 1 line then end of round
-        if(position.y == map.rows) {
-            setStatus(status.fail);
-            return;
-        } else {
-            // Add the new bubble to teh available bubbles
-            gamer.availableBubbles++;
-        }
+        // Add the new bubble to teh available bubbles
+        gamer.availableBubbles++;
 
         var realPosition = getBubblePosition(position.x, position.y);
         map.bubbles[position.x][position.y].x = realPosition.x;
@@ -1137,10 +1150,24 @@ $(function() {
             resetChecked();
         }
 
+        // check for illegal bubbles
+        setTimeout(function(){
+            borderCheck();
+        }, 300);
+
         // check the available bubbles
         // if there is no bubble on the map, the gamer won this round
         if(gamer.availableBubbles <= 0) {
             setStatus(status.done);
+        }
+    }
+
+    function borderCheck() {
+        for (var i = 0; i < map.columns; i++) {
+            if(map.bubbles[i][map.rows - 1].type != bubbleTypes.none) {
+                setStatus(status.fail);
+                break;
+            }
         }
     }
 
@@ -1160,6 +1187,7 @@ $(function() {
                 // Convert to unused moves into score
                 gamer.score += gamer.shoots * map.shoot_score;
                 refreshScore(gamer.score);
+                globalScore = gamer.score;
                 refreshShoots(0);
 
                 // change the Complete zone stats
@@ -1181,6 +1209,9 @@ $(function() {
                     gamer.shoots--;
                     refreshShoots(gamer.shoots);
                     nextBubble();
+
+                    // RESET THE LEVEL
+                    resetLevel();
 
                     // Get back to the game after one sec
                     setTimeout(function(){
