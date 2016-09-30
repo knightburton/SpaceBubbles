@@ -378,7 +378,7 @@ $(function() {
         // reset the stats
         gamer.lives = 3;
         gamer.score = 0;
-        gamer.level = 5;
+        gamer.level = 1;
         gamer.shoots = 120;
         gamer.availableBubbles = 0;
         gamer.timer.minute = 0;
@@ -609,6 +609,9 @@ $(function() {
         resetType();
         resetRemoved();
         gamer.shoots = 120 - (gamer.level * 5);
+        if(gamer.shoots < 80) {
+            gamer.shoots = 80;
+        }
         refreshShoots(gamer.shoots);
         gamer.availableBubbles = 0;
         gamer.missedGroups = 0;
@@ -657,9 +660,23 @@ $(function() {
 
         var sun = random(1,100);
         if(sun <= 3) {
-            gamer.next.type = 0;
+            gamer.next.type = bubbleTypes.sun;
+        } else if(gamer.availableBubbles <= 5) {
+            var types = [];
+            for(var j = 0; j < map.rows; j++) {
+                for(var i = 0; i < map.columns; i++) {
+                    var bubble = map.bubbles[i][j];
+                    if(bubble.type >= bubbleTypes.mercury
+                       && bubble.type <= bubbleTypes.saturn
+                       && !bubble.removed
+                       && !bubble.assigned) {
+                        types.push(bubble.type);
+                    }
+                }
+            }
+            gamer.next.type = types[Math.floor(Math.random() * types.length)];
         } else {
-            gamer.next.type = random(1,6);   
+            gamer.next.type = random(1,6);
         }
     }
 
