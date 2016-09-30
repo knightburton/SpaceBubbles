@@ -198,6 +198,8 @@ $(function() {
                     // Stop the timer
                     clearInterval(gamer.timer.interval);
                 } break;
+                case status.done:
+                    nextLevel();
                 case status.paused: {
                     toggleNavigation();
                     setStatus(status.running);
@@ -608,7 +610,28 @@ $(function() {
         resetChecked();
         resetType();
         resetRemoved();
-        gamer.shoots = 120 - (gamer.level * 5);
+        gamer.shoots = 120 - ((gamer.level - 1) * 5);
+        if(gamer.shoots < 80) {
+            gamer.shoots = 80;
+        }
+        refreshShoots(gamer.shoots);
+        gamer.availableBubbles = 0;
+        gamer.missedGroups = 0;
+        gamer.score = globalScore;
+        refreshScore(gamer.score);
+        insertCounter = 0;
+        createMap();
+        nextBubble();
+        nextBubble();
+    }
+
+    function nextLevel() {
+        resetChecked();
+        resetType();
+        resetRemoved();
+        gamer.level++;
+        refreshLevel(gamer.level);
+        gamer.shoots = 120 - ((gamer.level - 1) * 5);
         if(gamer.shoots < 80) {
             gamer.shoots = 80;
         }
@@ -1118,7 +1141,7 @@ $(function() {
         gamer.shoots--;
         refreshShoots(gamer.shoots);
         if(gamer.shoots <= 0) {
-            setStatus(status.game_over);
+            setStatus(status.fail);
         }
 
         // get the next bubble
@@ -1212,13 +1235,15 @@ $(function() {
                 $("#congratulation-score-span").text(gamer.score);
                 $("#congratulation-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
 
-                //TODO: implement the new level action
+                swithGameControlButtonText("Next level");
             } break;
             case status.fail: {
                 gamer.lives--;
                 refreshLives(gamer.lives);
                 if(gamer.lives <= 0) {
-                    setStatus(status.game_over);
+                    setTimeout(function() {
+                        setStatus(status.game_over);
+                    }, 300);
                 } else {
                     selectZone(zone.oops);
 
