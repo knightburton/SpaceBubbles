@@ -86,7 +86,7 @@ h4 {
 /*
 *	STATISTIC BOX
 */
-#wrapper #aside #game-stats {
+#wrapper #aside #stats {
 	position: relative;
 	width: 190px;
 	height: 290px;
@@ -95,7 +95,7 @@ h4 {
 	background-color: #000;
 }
 
-#wrapper #aside #game-stats div#lives-img {
+#wrapper #aside #stats div#lives {
 	position: relative;
 	width: 180px;
 	height: 40px;
@@ -103,7 +103,7 @@ h4 {
 	background-color: #ff4d4d;
 }
 
-#wrapper #aside #game-stats div#lives-img .lives {
+#wrapper #aside #stats div#lives .lives {
 	position: relative;
 	width: 40px;
 	height: 40px;
@@ -112,7 +112,7 @@ h4 {
 	float: left;
 }
 
-#wrapper #aside #game-stats span {
+#wrapper #aside #stats span {
 	position: relative;
 	display: block;
 	font-size: 25px;
@@ -125,7 +125,7 @@ h4 {
 /*
 *	MENU BOX
 */
-#wrapper #aside #game-menu {
+#wrapper #aside #menu {
 	position: relative;
 	width: 190px;
 	height: 210px;
@@ -134,13 +134,13 @@ h4 {
 	background-color: #000;
 }
 
-#wrapper #aside #game-menu ul {
+#wrapper #aside #menu ul {
 	position: relative;
 	margin: 30px 0 0 0;
 	padding: 0 0 0 10px;
 }
 
-#wrapper #aside #game-menu ul li {
+#wrapper #aside #menu ul li {
 	list-style: none;
 	font-size: 12px;
 	margin: 5px;
@@ -148,27 +148,27 @@ h4 {
 	cursor: pointer;
 }
 
-#wrapper #aside #game-menu ul li:hover {
+#wrapper #aside #menu ul li:hover {
 	color: #f00;
 }
 
-#wrapper #aside #game-menu ul li#music-button {
+#wrapper #aside #menu ul li#music-button {
 	margin-top: 10px;
 }
 
-#wrapper #aside #game-menu ul li#fullscreen-button {
+#wrapper #aside #menu ul li#fullscreen-button {
 	margin-bottom: 20px;
 }
 
-#wrapper #aside #game-menu ul li.disable-navigation-button {
+#wrapper #aside #menu ul li.disable-navigation-button {
 	pointer-events: none;
 	opacity: 0.3;
 }
 
 /*
-*	NEXT BUBBLE BOX
+*	NEXT PLANET BOX
 */
-#wrapper #aside #game-next {
+#wrapper #aside #next {
 	position: relative;
 	width: 190px;
 	height: 70px;
@@ -177,18 +177,18 @@ h4 {
 	background-color: #000;
 }
 
-#wrapper #aside #game-next #next-info {
+#wrapper #aside #next #info {
 	position: relative;
 	float: right;
 	width: 120px;
 	height: inherit;
 }
 
-#wrapper #aside #game-next #next-info h2 {
+#wrapper #aside #next #info h2 {
 	text-align: center;
 }
 
-#wrapper #aside #game-next #number-of-next {
+#wrapper #aside #next #shoots {
 	text-align: center;
 }
 

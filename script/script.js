@@ -2,10 +2,10 @@ $(function() {
     // Canvas and context
     var canvas =                document.getElementById("game");
     var context =               canvas.getContext("2d");
-    var canvas_next =           document.getElementById("next");
+    var canvas_next =           document.getElementById("next-planet");
     var context_next =          canvas_next.getContext("2d");
 
-    var bubble_size =            50;                 // A single bubble x,y sideze in pixel
+    var planet_size =            50;                // A single planet x,y sideze in pixel
 
     // Map information
     var map = {
@@ -16,26 +16,26 @@ $(function() {
         columns:                9,                  // number of columns
         rows:                   13,                 // number of rows
         downgrade:              4,                  // numbers of free rows at the start
-        bubble_w:               bubble_size,         // bubble image width
-        bubble_h:               bubble_size,         // bubble image height
-        bubble_r:               25,                 // bubble radius from center
-        bubble_s:               5,                  // bubble split pixel
-        bubbles:                [],                 // 2D bubbles array
-        single_score:           3,                  // a single bubble`s score
-        floating_score:         5,                  // a single floating bubble`s score
+        planet_w:               planet_size,        // planet image width
+        planet_h:               planet_size,        // planet image height
+        planet_r:               25,                 // planet radius from center
+        planet_s:               5,                  // planet split pixel
+        planets:                [],                 // 2D planets array
+        single_score:           3,                  // a single planet`s score
+        floating_score:         5,                  // a single floating planet`s score
         shoot_score:            15,                 // a single unused move score
         number_of_max_lives:    3      
     };
 
-    // Bubble class
-    var Bubble = function(x, y, type, assigned, removed, checked, id) {
+    // planet class
+    var Planet = function(x, y, type, assigned, removed, checked, id) {
         this.x =                x;                  // set the x position
         this.y =                y;                  // set the y position
         this.type =             type;               // set the type
         this.assigned =         assigned;           // set the assigned option
         this.removed =          removed;            // set the removed option
         this.checked =          checked;            // set the checked option
-        this.id =               id;                 // set the bubble id
+        this.id =               id;                 // set the planet id
     }
 
     // Gamer information
@@ -43,23 +43,23 @@ $(function() {
         x:                      0,                  // gamer x position
         x:                      0,                  // gamer y position
         angle:                  0,                  // gamer and mouse angle
-        bubble: {
-            x:                  0,                  // bubble x position
-            y:                  0,                  // bubble y position
-            angle:              0,                  // bubble and mouse angle
-            speed:              10,                 // bubble move speed
-            type:               -1                  // bubble type
+        planet: {
+            x:                  0,                  // planet x position
+            y:                  0,                  // planet y position
+            angle:              0,                  // planet and mouse angle
+            speed:              10,                 // planet move speed
+            type:               -1                  // planet type
         },
-        next: {                                     // the next bubble info
-            x:                  0,                  // next bubble x position
-            y:                  0,                  // next bubble y position
-            type:               0                   // next bubble type
+        next: {                                     // the next planet info
+            x:                  0,                  // next planet x position
+            y:                  0,                  // next planet y position
+            type:               0                   // next planet type
         },
         lives:                  3,                  // actual lives
         score:                  0,                  // actual score,
         level:                  0,                  // actual level
         shoots:                 0,                  // available shoots per level
-        available_bubbles:      0,                  // available bubbles number on the map
+        available_planets:      0,                  // available planets number on the map
         missed_groups:          0,                  // counter for the missed default or floated group
         timer: {
             minute:             0,                  // actual timer minute
@@ -75,6 +75,16 @@ $(function() {
         time:                   2,
         level:                  3,
         shoots:                 4
+    };
+
+    var menu_items = {
+        game_control:           0,
+        high_scores:            1,
+        about:                  2,
+        music:                  3,
+        effects:                4,
+        fullscreen:             5,
+        reset:                  6
     };
 
     // The music object
@@ -94,8 +104,8 @@ $(function() {
     // Fullscreen indicator
     var is_fullscreen =         false;
 
-    // The bubbles image object
-    var common_image = {
+    // The planets image object
+    var planets_image = {
         source:                 null,
         loaded:                 false,
     };
@@ -122,8 +132,8 @@ $(function() {
         oops:                   7
     };
 
-    // The bubbles [globes] type enum
-    var bubble_types = {
+    // The planets type enum
+    var planet_types = {
         none:                   -1,
         sun:                    0,
         mercury:                1,
@@ -147,13 +157,13 @@ $(function() {
     var global_score =          0;                  // global score
 
     var current_status =        null;               // The actual status of the game
-    var processing =            false;              // Variable for the moving bubble
+    var processing =            false;              // Variable for the moving planet
     var animation_id =          null;               // Requested animation frame
     var group =                 [];                 // Array for the founded groups
     var working_array =         [];                 // Temporary array for the group finder function
-    var id_counter =            0;                  // Counter for the bubbles id
-    var bar =                   0;                  // Bubble animation - reduction
-    var remove_animation =      false;              // Bubble animation - enable
+    var id_counter =            0;                  // Counter for the planets id
+    var bar =                   0;                  // planet animation - reduction
+    var remove_animation =      false;              // planet animation - enable
     var hardmode =              false;              // hardmode indicator
     var insert_counter =        0;                  // inserted new row counter
 
@@ -167,46 +177,46 @@ $(function() {
     // Initialize function
     function init() {
         // Set the init status.
-        setStatus(status.init);
+        set_game_status(status.init);
 
         // set the welcome zone
-        selectZone(zone.welcome);
+        set_action_zone(zone.welcome);
 
         // Init the background music
-        initBackgroundMusic();
+        init_background_music();
         // Init the sound effects
-        initEffects();
+        init_effects();
 
         // subscribe to mouse events
-        canvas.addEventListener('mousemove', canvasMouseMove);
-        canvas.addEventListener('click', canvasClick);
+        canvas.addEventListener('mousemove', canvas_mouse_move);
+        canvas.addEventListener('click', canvas_click);
 
         // implements the menu items clicks
         $('#game-control-button').on('click', function() {
             switch(current_status) {
                 case status.init:
                 case status.game_over: {
-                    toggleNavigation();
-                    setStatus(status.running);
-                    selectZone(zone.game);
-                    swithGameControlButtonText("Pause");
-                    newGame();
+                    toggle_menu_action();
+                    set_game_status(status.running);
+                    set_action_zone(zone.game);
+                    set_menu_item_text(menu_items.game_control, "Pause");
+                    new_game();
                 } break;
                 case status.running: {
-                    toggleNavigation();
-                    setStatus(status.paused);
-                    selectZone(zone.pause);
-                    swithGameControlButtonText("Continue");
+                    toggle_menu_action();
+                    set_game_status(status.paused);
+                    set_action_zone(zone.pause);
+                    set_menu_item_text(menu_items.game_control, "Continue");
                     // Stop the timer
                     clearInterval(gamer.timer.interval);
                 } break;
                 case status.done:
-                    nextLevel();
+                    next_level();
                 case status.paused: {
-                    toggleNavigation();
-                    setStatus(status.running);
-                    selectZone(zone.game);
-                    swithGameControlButtonText("Pause");
+                    toggle_menu_action();
+                    set_game_status(status.running);
+                    set_action_zone(zone.game);
+                    set_menu_item_text(menu_items.game_control, "Pause");
                     // Start the timer
                     gamer.timer.interval = setInterval(calculate_time, 1000);
                 } break;
@@ -214,24 +224,24 @@ $(function() {
         });
 
         $('#high-scores-button').on('click', function() {
-            selectZone(zone.highscores);
+            set_action_zone(zone.highscores);
         });
 
         $('#about-button').on('click', function() {
-            selectZone(zone.about);
+            set_action_zone(zone.about);
         });
 
-        $('#music-button').on('click', toggleMusic);
+        $('#music-button').on('click', toggle_music);
 
-        $('#effects-button').on('click', toggleEffects);
+        $('#effects-button').on('click', toggle_effects);
 
         $('#reset-button').on('click', function() {
             if(current_status != status.init) {
                 reset();
-                setStatus(status.init);
-                swithGameControlButtonText("New Game");
+                set_game_status(status.init);
+                set_menu_item_text(menu_items.game_control, "New Game");
                 $('.navigation-button').removeClass("disable-navigation-button");
-                selectZone(zone.welcome);
+                set_action_zone(zone.welcome);
             }
         });
 
@@ -264,55 +274,39 @@ $(function() {
             }
 
             is_fullscreen = !is_fullscreen;
-            refreshFullscreenMenuItem(is_fullscreen);
+            set_menu_item_text(menu_items.fullscreen, is_fullscreen);
         });
 
-        // init the bubbles array
+        // init the planets array
         for(var i = 0; i < map.columns; i++) {
-            map.bubbles[i] = [];
+            map.planets[i] = [];
             for(var j = 0; j < map.rows; j++) {
                 id_counter++;
-                map.bubbles[i][j] = new Bubble(i,j, -1, false, false, id_counter);
+                map.planets[i][j] = new Planet(i,j, -1, false, false, id_counter);
             }
         }
 
         // Init tha map
-        map.width = map.columns * map.bubble_w + map.bubble_w/2;
-        map.height = canvas.height - map.bubble_h - 10;
+        map.width = map.columns * map.planet_w + map.planet_w/2;
+        map.height = canvas.height - map.planet_h - 10;
 
         // Init the gamer
-        gamer.x = map.x + map.width/2 - map.bubble_w/2;
+        gamer.x = map.x + map.width/2 - map.planet_w/2;
         gamer.y = map.y + map.height;
         gamer.angle = 90;
         gamer.next.x = 10
         gamer.next.y = 10
 
         // Init and Refresh the live hearths
-        initLivesImg();
+        init_hearth_images();
         set_stat(stat_types.lives, gamer.lives);
 
-        // Init the image of bubbles
-        loadCommonImages();
-    }
-
-    // Set the selected zone
-    function selectZone(selected_zone) {
-        for(var i = 0; i < zone.list.length; i++) {
-            if(i != selected_zone) {
-                $('#' + zone.list[i]).hide();
-            } else {
-                $('#' + zone.list[i]).show();
-            }
-        }
-    }
-
-    // Enable or disable navigation buttons
-    function toggleNavigation() {
-        $(".navigation-button").toggleClass("disable-navigation-button");
+        // Init the image of planets
+        load_planets_image();
     }
 
     // Init and start the background music
-    function initBackgroundMusic() {
+    function init_background_music() {
         music.dom = document.createElement('AUDIO');
         music.dom.src = 'assets/sound/Most_awesome_8-bit_song_ever.mp3';
         music.dom.loop = true;
@@ -320,15 +314,8 @@ $(function() {
         music.dom.volume = 0.7;
     }
 
-    // Mute and unmute the background music
-    function toggleMusic() {
-        music.mute = !music.mute;
-        music.dom.muted = music.mute;
-        refreshMusicMenuItem(music.mute);
-    }
-
     // Init the effects
-    function initEffects() {
+    function init_effects() {
         effects.shoot = document.createElement('AUDIO');
         effects.explosion = document.createElement('AUDIO');
         effects.hit = document.createElement('AUDIO');
@@ -342,37 +329,36 @@ $(function() {
         effects.hit.volume = 1.0;
     }
 
-    // Mute and unmute the effects
-    function toggleEffects() {
-        effects.mute = !effects.mute;
-        effects.shoot.muted = effects.mute;
-        effects.explosion.muted = effects.mute;
-        effects.hit.muted = effects.mute;
-        refreshEffectsMenuItem(effects.mute);
+    // Init the lives image
+    function init_hearth_images() {
+        var img = load_hearth_image();
+        for(var i = 0; i < gamer.lives; i++) {
+            $(img).clone().appendTo('#lives').addClass('lives').attr('id', (i + 1) + '_heart');
+        }
     }
 
     // Load the hearth image
-    function loadHeartImage() {
+    function load_hearth_image() {
         var hearth = new Image();
         hearth.src = 'assets/img/hearth.png';
         return hearth;
     }
 
-    // Load the image of bubbles
-    function loadCommonImages() {
-        common_image.source = new Image();
-        common_image.source.src = 'assets/img/bubbles.png';
-        common_image.source.onload = function() {
-            common_image.loaded = true;
+    // Load the image of planets
+    function load_planets_image() {
+        planets_image.source = new Image();
+        planets_image.source.src = 'assets/img/planets.png';
+        planets_image.source.onload = function() {
+            planets_image.loaded = true;
         };
     }
 
     // New game
-    function newGame() {
-        // reset the bubbles
-        resetChecked();
-        resetType();
-        resetRemoved();
+    function new_game() {
+        // reset the planets
+        reset_checked_planets();
+        reset_planets_type();
+        reset_removed_planets();
 
         // If we used animation, cancel that
         if(animation_id != null) {
@@ -384,7 +370,7 @@ $(function() {
         set_stat(stat_types.score, 0);
         set_stat(stat_types.level, 1);
         set_stat(stat_types.shoots, 120);
-        gamer.available_bubbles = 0;
+        gamer.available_planets = 0;
         gamer.timer.minute = 0;
         gamer.timer.second = 0;
         set_stat(stat_types.time);
@@ -392,18 +378,18 @@ $(function() {
         gamer.timer.interval = setInterval(calculate_time, 1000);
 
         // Create a new map
-        createMap();
+        create_random_map();
 
-        // Init the next and set the gamer bubble
-        nextBubble();
-        nextBubble();
+        // Init the next and set the gamer planet
+        load_next_planet();
+        load_next_planet();
 
         // start the main loop with 60 fps
-        startLoop(60);
+        start_loop(60);
     }
 
     // Set up the loop fps
-    function startLoop(fps) {
+    function start_loop(fps) {
         fps_interval = 1000 / fps;
         then = Date.now();
         loop();
@@ -424,12 +410,12 @@ $(function() {
             then = now - (elapsed % fps_interval);
 
             // drawing context
-            if(common_image.loaded) {
+            if(planets_image.loaded) {
                 context.clearRect(0, 0, canvas.width, canvas.height);
-                renderBubbles();
-                renderGamer();
-                renderNext();
-                renderBorderLine();
+                render_planets();
+                render_gamer();
+                render_next_planet();
+                render_bottom_border();
             }
 
             if(processing) {
@@ -439,9 +425,9 @@ $(function() {
     }
 
     // Mouse movement in the canavs
-    function canvasMouseMove(e) {
-        var mouse_poisition = getCursorPosition(e);
-        var mouse_angle = rad2Deg(Math.atan2((gamer.y + map.bubble_h / 2) - mouse_poisition.y, mouse_poisition.x - (gamer.x + map.bubble_w / 2)));
+    function canvas_mouse_move(e) {
+        var mouse_poisition = get_cursor_position(e);
+        var mouse_angle = rad_to_deg(Math.atan2((gamer.y + map.planet_h / 2) - mouse_poisition.y, mouse_poisition.x - (gamer.x + map.planet_w / 2)));
 
         // convert to 360
         if(mouse_angle < 0) {
@@ -464,44 +450,27 @@ $(function() {
     }
 
     // Click in the canvas
-    function canvasClick() {
+    function canvas_click() {
         if(!processing) {
             // play the shoot effect
             effects.shoot.play();
 
-            gamer.bubble.x = gamer.x;
-            gamer.bubble.y = gamer.y;
-            gamer.bubble.angle = gamer.angle;
+            gamer.planet.x = gamer.x;
+            gamer.planet.y = gamer.y;
+            gamer.planet.angle = gamer.angle;
             processing = true;
         }
     }
 
-    // Get a random int between low and high arguments
-    function random(low, high) {
-        return Math.floor(low + Math.random() * (high - low + 1));
-    }
-
-    // Convert radians to degrees
-    function rad2Deg(angle) {
-        return angle * (180 / Math.PI);
-    }
-    
-    // Convert degrees to radians
-    function deg2Rad(angle) {
-        return angle * (Math.PI / 180);
-    }
-
-    // Init the lives image
-    function initLivesImg() {
-        var img = loadHeartImage();
-        for(var i = 0; i < gamer.lives; i++) {
-            $(img).clone().appendTo('#lives-img').addClass('lives').attr('id', (i + 1) + '_heart');
+    // Set the selected zone
+    function set_action_zone(selected_zone) {
+        for(var i = 0; i < zone.list.length; i++) {
+            if(i != selected_zone) {
+                $('#' + zone.list[i]).hide();
+            } else {
+                $('#' + zone.list[i]).show();
+            }
         }
-    }
-
-    // Switch the game control button text to the actual status text
-    function swithGameControlButtonText(text) {
-        $('#game-control-button').text(text);
     }
 
     function set_stat(item, value = null) {
@@ -518,72 +487,130 @@ $(function() {
             } break;
             case stat_types.score: {
                 gamer.score = value;
-                $('#game-score').text(value);
+                $('#score').text(value);
             } break;
             case stat_types.time: {
                 var time = "";
                 (gamer.timer.minute < 10) ? (time = "0" + gamer.timer.minute) : (time = gamer.timer.minute);
                 (gamer.timer.second < 10) ? (time += ":0" + gamer.timer.second) : (time += ":" + gamer.timer.second);
-                $('#game-time').text(time);
+                $('#time').text(time);
             } break;
             case stat_types.level: {
                 gamer.level = value;
-                $('#game-level').text(value);
+                $('#level').text(value);
             } break;
             case stat_types.shoots: {
                 gamer.shoots = value;
                 if(gamer.shoots < 80) {
                     gamer.shoots = 80;
                 }
-                $('#number-of-next').text(value);
+                $('#shoots').text(value);
             } break;
         }
     }
 
-    function calculate_time() {
-        gamer.timer.second++;
-        if(gamer.timer.second > 59) {
-            gamer.timer.minute++;
-            gamer.timer.second = 0;
-        }
-        if(gamer.timer.second > 59 && gamer.timer.minute > 59) {
-            clearInterval(gamer.timer.interval);
-        }
-        set_stat(stat_types.time);
-    }
-
-    // Refresh the music menu item
-    function refreshMusicMenuItem(muted) {
-        if(muted) {
-            $('#music-button').text('Music OFF');
-        } else {
-            $('#music-button').text('Music ON');
-        }
-    }
-
-    // Refresh the effect menu item
-    function refreshEffectsMenuItem(muted) {
-        if(muted) {
-            $('#effects-button').text('Effects OFF');
-        } else {
-            $('#effects-button').text('Effects ON');
+    function set_menu_item_text(item, value) {
+        switch(item) {
+            case menu_items.game_control: {
+                $('#game-control-button').text(value);
+            } break;
+            case menu_items.music: {
+                var text = (value) ? 'OFF' : 'ON';
+                $('#music-button span').text(text);
+            } break;
+            case menu_items.effects: {
+                var text = (value) ? 'OFF' : 'ON';
+                $('#effects-button span').text(text);
+            } break;
+            case menu_items.fullscreen: {
+                var text = (value) ? 'ON' : 'OFF';
+                $('#fullscreen-button span').text(text);
+            } break;
         }
     }
 
-    // Refresh the fullscren menu item
-    function refreshFullscreenMenuItem(enabled) {
-        if(enabled) {
-            $('#fullscreen-button').text('Fullscreen ON');
-        } else {
-            $('#fullscreen-button').text('Fullscreen OFF');
+    // Set the game status
+    function set_game_status(s) {
+        current_status = s;
+        // additional options
+        switch(s) {
+            case status.game_over: {
+                set_action_zone(zone.game_over);
+                clearInterval(gamer.timer.interval);
+                set_menu_item_text(menu_items.game_control, "Restart");
+            } break;
+            case status.done: {
+                set_action_zone(zone.complete);
+                clearInterval(gamer.timer.interval);
+
+                // Convert to unused moves into score
+                set_stat(stat_types.score, gamer.score + gamer.shoots * map.shoot_score);
+                global_score = gamer.score;
+                set_stat(stat_types.shoots, 0);
+
+                // change the Complete zone stats
+                $("#congratulation-level-span").text(gamer.level);
+                $("#congratulation-score-span").text(gamer.score);
+                $("#congratulation-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
+
+                set_menu_item_text(menu_items.game_control, "Next Level");
+            } break;
+            case status.fail: {
+                set_stat(stat_types.lives, gamer.lives - 1);
+                if(gamer.lives <= 0) {
+                    setTimeout(function() {
+                        set_game_status(status.game_over);
+                        // change the stats
+                        $("#failed-level-span").text(gamer.level);
+                        $("#failed-score-span").text(gamer.score);
+                        $("#failed-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
+                    }, 300);
+                } else {
+                    set_action_zone(zone.oops);
+
+                    // Pretend a good positioned shot
+                    set_stat(stat_types.shoots, gamer.shoots - 1);
+                    load_next_planet();
+
+                    // RESET THE LEVEL
+                    reset_current_level();
+
+                    // Get back to the game after one sec
+                    setTimeout(function(){
+                        set_action_zone(zone.game);
+                        set_game_status(status.running);
+                    }, 1000);
+                }
+            } break;
         }
+    }
+
+    // Enable or disable navigation buttons
+    function toggle_menu_action() {
+        $(".navigation-button").toggleClass("disable-navigation-button");
+    }
+
+    // Mute and unmute the background music
+    function toggle_music() {
+        music.mute = !music.mute;
+        music.dom.muted = music.mute;
+        set_menu_item_text(menu_items.music, music.mute);
+    }
+
+    // Mute and unmute the effects
+    function toggle_effects() {
+        effects.mute = !effects.mute;
+        effects.shoot.muted = effects.mute;
+        effects.explosion.muted = effects.mute;
+        effects.hit.muted = effects.mute;
+        set_menu_item_text(menu_items.effects, music.mute);
     }
 
     // Reset, back to the welcome page
     function reset() {
-        resetChecked();
-        resetType();
-        resetRemoved();
+        reset_checked_planets();
+        reset_planets_type();
+        reset_removed_planets();
         set_stat(stat_types.lives, 3);
         set_stat(stat_types.score, 0);
         set_stat(stat_types.level, 0);
@@ -592,48 +619,48 @@ $(function() {
         gamer.timer.second = 0;
         set_stat(stat_types.time);
         clearInterval(gamer.timer.interval);
-        gamer.available_bubbles = 0;
-        gamer.next.type = bubble_types.none;
+        gamer.available_planets = 0;
+        gamer.next.type = planet_types.none;
         gamer.missed_groups = 0;
         hardmode = false;
         insert_counter = 0;
     }
 
-    function resetLevel() {
-        resetChecked();
-        resetType();
-        resetRemoved();
+    function reset_current_level() {
+        reset_checked_planets();
+        reset_planets_type();
+        reset_removed_planets();
         set_stat(stat_types.shoots, 120 - ((gamer.level - 1) * 5));
-        gamer.available_bubbles = 0;
+        gamer.available_planets = 0;
         gamer.missed_groups = 0;
         set_stat(stat_types.score, global_score);
         insert_counter = 0;
-        createMap();
-        nextBubble();
-        nextBubble();
+        create_random_map();
+        load_next_planet();
+        load_next_planet();
     }
 
-    function nextLevel() {
-        resetChecked();
-        resetType();
-        resetRemoved();
+    function next_level() {
+        reset_checked_planets();
+        reset_planets_type();
+        reset_removed_planets();
         set_stat(stat_types.level, gamer.level + 1);
         set_stat(stat_types.shoots, 120 - ((gamer.level - 1) * 5));
-        gamer.available_bubbles = 0;
+        gamer.available_planets = 0;
         gamer.missed_groups = 0;
         set_stat(stat_types.score, global_score);
         insert_counter = 0;
-        createMap();
-        nextBubble();
-        nextBubble();
+        create_random_map();
+        load_next_planet();
+        load_next_planet();
     }
 
     // Create a new random filled map
-    function createMap() {
-        var easy = bubble_types.none;
+    function create_random_map() {
+        var easy = planet_types.none;
         for(var j = 0; j < map.rows - map.downgrade; j++) {
             for(var i = 0; i < map.columns; i++) {
-                var bubble = map.bubbles[i][j];
+                var planet = map.planets[i][j];
                 if(gamer.level <= 2) {
                     if(i % 2 == 0) {
                         var tmp = random(1, 6);
@@ -642,40 +669,40 @@ $(function() {
                         }
                         easy = tmp;
                     }
-                    bubble.type = easy;
+                    planet.type = easy;
                 } else if(gamer.level <= 4) {
-                    bubble.type = random(1, 6);
+                    planet.type = random(1, 6);
                 } else {
                     hardmode = true;
-                    bubble.type = random(1, 6);
+                    planet.type = random(1, 6);
                 }
-                gamer.available_bubbles++;
+                gamer.available_planets++;
             }
         }
     }
 
-    // Init the next bubbles
-    function nextBubble() {
-        gamer.bubble.type = gamer.next.type;
-        gamer.bubble.assigned = false;
-        gamer.bubble.removed = false;
-        gamer.bubble.checked = false;
-        gamer.bubble.x = gamer.x;
-        gamer.bubble.y = gamer.y;
+    // Init the next planets
+    function load_next_planet() {
+        gamer.planet.type =     gamer.next.type;
+        gamer.planet.assigned = false;
+        gamer.planet.removed =  false;
+        gamer.planet.checked =  false;
+        gamer.planet.x =        gamer.x;
+        gamer.planet.y =        gamer.y;
 
         var sun = random(1,100);
         if(sun <= 3) {
-            gamer.next.type = bubble_types.sun;
-        } else if(gamer.available_bubbles <= 5) {
+            gamer.next.type = planet_types.sun;
+        } else if(gamer.available_planets <= 5) {
             var types = [];
             for(var j = 0; j < map.rows; j++) {
                 for(var i = 0; i < map.columns; i++) {
-                    var bubble = map.bubbles[i][j];
-                    if(bubble.type >= bubble_types.mercury
-                       && bubble.type <= bubble_types.saturn
-                       && !bubble.removed
-                       && !bubble.assigned) {
-                        types.push(bubble.type);
+                    var planet = map.planets[i][j];
+                    if(planet.type >= planet_types.mercury
+                       && planet.type <= planet_types.saturn
+                       && !planet.removed
+                       && !planet.assigned) {
+                        types.push(planet.type);
                     }
                 }
             }
@@ -685,9 +712,9 @@ $(function() {
         }
     }
 
-    // Render the bubbles
-    function renderBubbles() {
-        if(bar >= bubble_size) {
+    // Render the planets
+    function render_planets() {
+        if(bar >= planet_size) {
             bar = 0;
             remove_animation = false;
         } else if(remove_animation) {
@@ -696,24 +723,24 @@ $(function() {
 
         for(var j = 0; j < map.rows; j++) {
             for(var i = 0; i < map.columns; i++) {
-                var bubble = map.bubbles[i][j];
+                var planet = map.planets[i][j];
 
-                // get the current bubble position
-                var position = getBubblePosition(i, j);
-                bubble.x = position.x;
-                bubble.y = position.y;
+                // get the current planet position
+                var position = get_planet_real_position(i, j);
+                planet.x = position.x;
+                planet.y = position.y;
                 // get the cropped posiiton
-                var crop = getBubbleCrop(map.bubbles[i][j].type);
+                var crop = get_planet_crop(map.planets[i][j].type);
 
-                if(bubble.assigned) {
-                    // bubble animation
-                    if(bar >= bubble_size) {
-                        bubble.assigned = false;
-                        bubble.removed = true;
+                if(planet.assigned) {
+                    // planet animation
+                    if(bar >= planet_size) {
+                        planet.assigned = false;
+                        planet.removed = true;
                     }
-                    context.drawImage(common_image.source, crop, 0, map.bubble_w, map.bubble_h, position.x + bar/2, position.y + bar/2, map.bubble_w - bar, map.bubble_h - bar);
-                } else if(!bubble.removed) {
-                    context.drawImage(common_image.source, crop, 0, map.bubble_w, map.bubble_h, position.x, position.y, map.bubble_w, map.bubble_h);
+                    context.drawImage(planets_image.source, crop, 0, map.planet_w, map.planet_h, position.x + bar/2, position.y + bar/2, map.planet_w - bar, map.planet_h - bar);
+                } else if(!planet.removed) {
+                    context.drawImage(planets_image.source, crop, 0, map.planet_w, map.planet_h, position.x, position.y, map.planet_w, map.planet_h);
                 } else {
                     continue;
                 }
@@ -721,34 +748,34 @@ $(function() {
         }
     }
 
-    // Render the gamer's bubble
-    function renderGamer() {
-        renderAimLine();
+    // Render the gamer's planet
+    function render_gamer() {
+        render_aim_helper_line();
 
         if(!processing) {
-            gamer.bubble.x = gamer.x;
-            gamer.bubble.y = gamer.y;
+            gamer.planet.x = gamer.x;
+            gamer.planet.y = gamer.y;
         }
-        var crop = getBubbleCrop(gamer.bubble.type);
-        context.drawImage(common_image.source, crop, 0, map.bubble_w, map.bubble_h, gamer.bubble.x, gamer.bubble.y, map.bubble_w, map.bubble_h);
+        var crop = get_planet_crop(gamer.planet.type);
+        context.drawImage(planets_image.source, crop, 0, map.planet_w, map.planet_h, gamer.planet.x, gamer.planet.y, map.planet_w, map.planet_h);
     }
 
-    // Render the next bubble
-    function renderNext() {
+    // Render the next planet
+    function render_next_planet() {
         var imgNext = new Image();
-        imgNext.src = 'assets/img/bubbles.png';
+        imgNext.src = 'assets/img/planets.png';
         imgNext.onload = function() {
-            var crop = getBubbleCrop(gamer.next.type);
+            var crop = get_planet_crop(gamer.next.type);
             context_next.clearRect(0, 0, 70, 70);
-            context_next.drawImage(imgNext, crop, 0, map.bubble_w, map.bubble_h, gamer.next.x, gamer.next.y, map.bubble_w, map.bubble_h);
+            context_next.drawImage(imgNext, crop, 0, map.planet_w, map.planet_h, gamer.next.x, gamer.next.y, map.planet_w, map.planet_h);
         }
     }
 
     // Render the aiming line for the user
-    function renderAimLine() {
+    function render_aim_helper_line() {
         var c = {
-            x: gamer.x + map.bubble_w / 2,
-            y: gamer.y + map.bubble_h / 2
+            x: gamer.x + map.planet_w / 2,
+            y: gamer.y + map.planet_h / 2
         };
 
         context.setLineDash([]);
@@ -756,12 +783,12 @@ $(function() {
         context.strokeStyle = '#00ff00';
         context.beginPath();
         context.moveTo(c.x, c.y);
-        context.lineTo(c.x + 2 * map.bubble_w * Math.cos(deg2Rad(gamer.angle)), c.y -  2 * map.bubble_h * Math.sin(deg2Rad(gamer.angle)));
+        context.lineTo(c.x + 2 * map.planet_w * Math.cos(deg_to_rad(gamer.angle)), c.y -  2 * map.planet_h * Math.sin(deg_to_rad(gamer.angle)));
         context.stroke();
     }
 
     // Render the border line
-    function renderBorderLine() {
+    function render_bottom_border() {
         context.setLineDash([5, 15]);
 
         context.lineWidth = 1;
@@ -772,9 +799,9 @@ $(function() {
         context.stroke();
     }
 
-    // Returns the bubble position
-    function getBubblePosition(column, row) {
-        var x = map.x + column * map.bubble_w;
+    // Returns the planet position
+    function get_planet_real_position(column, row) {
+        var x = map.x + column * map.planet_w;
         
         var indent = 1;
 
@@ -783,16 +810,16 @@ $(function() {
         }
 
         if((row + 1) % 2 == indent) {
-            x += map.bubble_w / 2;
+            x += map.planet_w / 2;
         }
 
-        var y = map.y + row * (map.bubble_h - map.bubble_s);
+        var y = map.y + row * (map.planet_h - map.planet_s);
         return {x: x, y: y};
     }
 
     // Return the matrix current position
-    function getMatrixPosition(x, y) {
-        var my = Math.floor((y - map.y) / (map.bubble_h - map.bubble_s));
+    function get_planet_matrix_position(x, y) {
+        var my = Math.floor((y - map.y) / (map.planet_h - map.planet_s));
 
         var indent = 1;
 
@@ -802,15 +829,15 @@ $(function() {
 
         var xoffset = 0;
         if((my + 1) % 2 == indent) {
-            xoffset = map.bubble_w / 2;
+            xoffset = map.planet_w / 2;
         }
 
-        var mx = Math.floor(((x - xoffset) - map.x) / map.bubble_w);
+        var mx = Math.floor(((x - xoffset) - map.x) / map.planet_w);
         return {x: mx, y: my};
     }
 
-    // Returns the distance between two bubbles
-    function isCollide(x1, y1, r1, x2, y2, r2) {
+    // Returns the distance between two planets
+    function is_collide(x1, y1, r1, x2, y2, r2) {
         var deltax = x1 - x2;
         var deltay = y1 - y2;
         var distance = Math.sqrt(deltax * deltax + deltay * deltay);
@@ -820,8 +847,8 @@ $(function() {
         return false;
     }
 
-    // Returns the selected bubble neighbours in an array
-    function getNeighbours(x, y) {
+    // Returns the selected planet neighbours in an array
+    function get_planet_neighbours(x, y) {
         var neighbours = [];
 
         var indent = (y + 1) % 2;
@@ -835,11 +862,11 @@ $(function() {
             [[-1,0], [0,-1], [ 1,-1], [ 1,0], [ 1, 1], [0, 1]],
         ];
         for (var i = index[indent].length - 1; i >= 0; i--) {
-            var newX = index[indent][i][0] + x;
-            var newY = index[indent][i][1] + y;
-            if(newX >= 0 && newX < map.columns && newY >= 0 && newY < map.rows) {
-                if(map.bubbles[newX][newY].type != -1 && !map.bubbles[newX][newY].removed) {
-                    neighbours.push(map.bubbles[newX][newY]);
+            var new_x = index[indent][i][0] + x;
+            var new_y = index[indent][i][1] + y;
+            if(new_x >= 0 && new_x < map.columns && new_y >= 0 && new_y < map.rows) {
+                if(map.planets[new_x][new_y].type != -1 && !map.planets[new_x][new_y].removed) {
+                    neighbours.push(map.planets[new_x][new_y]);
                 }
             }
         }
@@ -848,12 +875,12 @@ $(function() {
     }
 
     // Return the crop x position
-    function getBubbleCrop(type) {
-        return type * map.bubble_w;
+    function get_planet_crop(type) {
+        return type * map.planet_w;
     }
 
     // Get the actuel position of the cursor
-    function getCursorPosition(e) {
+    function get_cursor_position(e) {
         var bound = canvas.getBoundingClientRect();
         return {
             x: Math.round((e.clientX - bound.left) / (bound.right - bound.left) * canvas.width),
@@ -861,75 +888,75 @@ $(function() {
         };
     }
 
-    function resetChecked() {
+    function reset_checked_planets() {
         for (var j = 0; j < map.rows; j++) {
             for (var i = 0; i < map.columns; i++) {
-                map.bubbles[i][j].checked = false;
+                map.planets[i][j].checked = false;
             }
         }
     }
 
-    function resetRemoved() {
+    function reset_removed_planets() {
         for (var j = 0; j < map.rows; j++) {
             for (var i = 0; i < map.columns; i++) {
-                map.bubbles[i][j].removed = false;
+                map.planets[i][j].removed = false;
             }
         }
     }
 
-    function resetType() {
+    function reset_planets_type() {
         for (var j = 0; j < map.rows; j++) {
             for (var i = 0; i < map.columns; i++) {
-                map.bubbles[i][j].type = -1;
+                map.planets[i][j].type = -1;
             }
         }
     }
     
-    function insertNewRow() {
+    function insert_new_planet_row() {
         insert_counter++;
         for (var i = 0; i < map.columns; i++) {
             for (var j = 0; j < map.rows - 1; j++) {
-               map.bubbles[i][map.rows -1 -j].type = map.bubbles[i][map.rows -1 -j -1].type;
-               map.bubbles[i][map.rows -1 -j].checked = map.bubbles[i][map.rows -1 -j -1].checked;
-               map.bubbles[i][map.rows -1 -j].assigned = map.bubbles[i][map.rows -1 -j -1].assigned;
-               map.bubbles[i][map.rows -1 -j].removed = map.bubbles[i][map.rows -1 -j -1].removed;
+               map.planets[i][map.rows -1 -j].type =        map.planets[i][map.rows -1 -j -1].type;
+               map.planets[i][map.rows -1 -j].checked =     map.planets[i][map.rows -1 -j -1].checked;
+               map.planets[i][map.rows -1 -j].assigned =    map.planets[i][map.rows -1 -j -1].assigned;
+               map.planets[i][map.rows -1 -j].removed =     map.planets[i][map.rows -1 -j -1].removed;
             }
         }
 
         for (var i = 0; i < map.columns; i++) {
-            map.bubbles[i][0].type = random(1, 6);
+            map.planets[i][0].type = random(1, 6);
         }
     }
 
-    function findGroup(x, y, match) {
-        var bubble = map.bubbles[x][y];
-        working_array = [bubble];
-        bubble.checked = true;
+    function find_group(x, y, match) {
+        var planet = map.planets[x][y];
+        working_array = [planet];
+        planet.checked = true;
 
-        var tGroup = [];
+        var temp_group = [];
 
         while(working_array.length > 0) {
-            var currentBubble = working_array.pop();
+            var current_planet = working_array.pop();
 
             // skip the empty places
-            if(currentBubble.type == -1) {
+            if(current_planet.type == -1) {
                 continue;
             }
 
             // skip the removed or assigned places
-            if(currentBubble.removed || currentBubble.assigned) {
+            if(current_planet.removed || current_planet.assigned) {
                 continue;
             }
 
 
-            if(!match || (currentBubble.type == bubble.type)) {
-                // addthe current bubble to the tGroup
-                tGroup.push(currentBubble);
+            if(!match || (current_planet.type == planet.type)) {
+                // addthe current planet to the temp_group
+                temp_group.push(current_planet);
 
-                // calculate the current bubble matrix position
-                var position = getMatrixPosition(currentBubble.x, currentBubble.y);
-                // get the neighbours of the current bubble
-                var neighbours = getNeighbours(position.x, position.y);
+                // calculate the current planet matrix position
+                var position = get_planet_matrix_position(current_planet.x, current_planet.y);
+                // get the neighbours of the current planet
+                var neighbours = get_planet_neighbours(position.x, position.y);
 
                 for (var i = neighbours.length - 1; i >= 0; i--) {
                     if(!neighbours[i].checked) {
@@ -941,21 +968,21 @@ $(function() {
             }
         }
 
-        // return the tGroup of bubbles
-        return tGroup;
+        // return the temp_group of planets
+        return temp_group;
     }
 
-    function findFloatingGroup() {
-        //resetChecked();
+    function find_floating_group() {
+        //reset_checked_planets();
 
-        var iGroups = [];
+        var inner_groups = [];
 
-        // check every bubble in the map
+        // check every planet in the map
         for (var j = 0; j < map.rows; j++) {
             for (var i = 0; i < map.columns; i++) {
-                var bubble = map.bubbles[i][j];
-                if(bubble.type != -1 && !bubble.checked) {
-                    var iGroup = findGroup(i, j, false);
+                var planet = map.planets[i][j];
+                if(planet.type != -1 && !planet.checked) {
+                    var iGroup = find_group(i, j, false);
 
                     // skip the empty iGroup
                     if(iGroup.length <= 0) {
@@ -973,37 +1000,37 @@ $(function() {
                     }
 
                     if(floating) {
-                        iGroups.push(iGroup);
+                        inner_groups.push(iGroup);
                     }
                 }
             }
         }
         
-        return iGroups;
+        return inner_groups;
     }
 
-    function removeGroup() {
+    function remove_group() {
         // Enable the remove animation
         remove_animation = true;
 
         // refresh the score
         set_stat(stat_types.score, gamer.score + map.single_score * group.length);
 
-        // refresh tha available bubbles
-        gamer.available_bubbles -= group.length;
+        // refresh tha available planets
+        gamer.available_planets -= group.length;
 
-        // set every bubble as assigned to remove
+        // set every planet as assigned to remove
         for (var i = group.length - 1; i >= 0; i--) {
             group[i].assigned = true;
         }
 
-        resetChecked();
+        reset_checked_planets();
 
         // play explosion sound effect
         effects.explosion.play();
     }
 
-    function removeFloatingGroup() {
+    function remove_floating_group() {
         // Enable the remove animation
         remove_animation = true;
 
@@ -1011,81 +1038,81 @@ $(function() {
         set_stat(stat_types.score, gamer.score + map.floating_score * group.length);
 
         for (var i = group.length - 1; i >= 0; i--) {
-            // refresh the available bubbles
-            gamer.available_bubbles -= group[i].length;
-            // set every bubble in the inner array as assigned
+            // refresh the available planets
+            gamer.available_planets -= group[i].length;
+            // set every planet in the inner array as assigned
             for (var j = group[i].length - 1; j >= 0; j--) {
                 group[i][j].assigned = true;
             }
         }
 
-        resetChecked();
+        reset_checked_planets();
 
         // play explosion sound effect
         effects.explosion.play();
     }
 
-    // Shoot the bubble
+    // Shoot the planet
     function shoot() {
         if(processing) {
-            gamer.bubble.x += gamer.bubble.speed * Math.cos(deg2Rad(gamer.bubble.angle));
-            gamer.bubble.y += gamer.bubble.speed * -1 * Math.sin(deg2Rad(gamer.bubble.angle));
+            gamer.planet.x += gamer.planet.speed * Math.cos(deg_to_rad(gamer.planet.angle));
+            gamer.planet.y += gamer.planet.speed * -1 * Math.sin(deg_to_rad(gamer.planet.angle));
 
-            if(gamer.bubble.x <= map.x) {
+            if(gamer.planet.x <= map.x) {
                 // play the hit effect
                 effects.hit.play();
 
                 // left side
-                gamer.bubble.angle = 180 - gamer.bubble.angle;
-                gamer.bubble.x = map.x;
-            } else if(gamer.bubble.x + map.bubble_w >= map.x + map.width) {
+                gamer.planet.angle = 180 - gamer.planet.angle;
+                gamer.planet.x = map.x;
+            } else if(gamer.planet.x + map.planet_w >= map.x + map.width) {
                 // play the hit effect
                 effects.hit.play();
 
                 // right side
-                gamer.bubble.angle = 180 - gamer.bubble.angle;
-                gamer.bubble.x = map.x + map.width - map.bubble_w;
+                gamer.planet.angle = 180 - gamer.planet.angle;
+                gamer.planet.x = map.x + map.width - map.planet_w;
             }
 
             // top
-            if(gamer.bubble.y <= map.y) {
+            if(gamer.planet.y <= map.y) {
                 // play the hit effect
                 effects.hit.play();
 
-                gamer.bubble.y = map.y;
-                putChains();
+                gamer.planet.y = map.y;
+                put_chains();
             }
 
-            // detect other bubbles
+            // detect other planets
             for(var i = 0; i < map.columns; i++) {
                 for(var j = 0; j < map.rows; j++) {
-                    var b = map.bubbles[i][j];
-                    // ignore the removed or empty or assigned for remove bubbles space
+                    var b = map.planets[i][j];
+                    // ignore the removed or empty or assigned for remove planets space
                     if(b.type == -1 || b.removed || b.assigned) {
                         continue;
                     }
 
-                    var position = getBubblePosition(i,j);
-                    if(isCollide(gamer.bubble.x + map.bubble_w / 2,
-                                 gamer.bubble.y + map.bubble_h / 2,
-                                 map.bubble_r - 3,
-                                 position.x + map.bubble_w / 2,
-                                 position.y + map.bubble_h / 2,
-                                 map.bubble_r - 3)) {
-                        putChains();
+                    var position = get_planet_real_position(i,j);
+                    if(is_collide(gamer.planet.x + map.planet_w / 2,
+                                 gamer.planet.y + map.planet_h / 2,
+                                 map.planet_r - 3,
+                                 position.x + map.planet_w / 2,
+                                 position.y + map.planet_h / 2,
+                                 map.planet_r - 3)) {
+                        put_chains();
                     }
                 }
             }
         }
     }
 
-    // Fix the bubble position
-    function putChains() {
+    // Fix the planet position
+    function put_chains() {
         processing = false;
-        // get the bubble's current center position
-        var cx = gamer.bubble.x + map.bubble_w / 2;
-        var cy = gamer.bubble.y + map.bubble_h / 2;
-        var position = getMatrixPosition(cx, cy);
+        // get the planet's current center position
+        var cx = gamer.planet.x + map.planet_w / 2;
+        var cy = gamer.planet.y + map.planet_h / 2;
+        var position = get_planet_matrix_position(cx, cy);
         if(position.x < 0) {
             position.x = 0;
         }
@@ -1102,143 +1129,119 @@ $(function() {
             position.y = map.rows;
         }
 
-        // Add the new bubble to teh available bubbles
-        gamer.available_bubbles++;
+        // Add the new planet to teh available planets
+        gamer.available_planets++;
 
-        var realPosition = getBubblePosition(position.x, position.y);
-        map.bubbles[position.x][position.y].x = realPosition.x;
-        map.bubbles[position.x][position.y].y = realPosition.y;
-        map.bubbles[position.x][position.y].type = gamer.bubble.type;
-        map.bubbles[position.x][position.y].assigned = false;
-        map.bubbles[position.x][position.y].removed = false;
-        map.bubbles[position.x][position.y].checked = false;
+        var realPosition = get_planet_real_position(position.x, position.y);
+        map.planets[position.x][position.y].x =         realPosition.x;
+        map.planets[position.x][position.y].y =         realPosition.y;
+        map.planets[position.x][position.y].type =      gamer.planet.type;
+        map.planets[position.x][position.y].assigned =  false;
+        map.planets[position.x][position.y].removed =   false;
+        map.planets[position.x][position.y].checked =   false;
 
         // play the hit effect
         effects.hit.play();
 
-        paladin(map.bubbles[position.x][position.y]);
+        paladin(map.planets[position.x][position.y]);
 
         set_stat(stat_types.shoots, gamer.shoots - 1);
         if(gamer.shoots <= 0) {
-            setStatus(status.fail);
+            set_game_status(status.fail);
         }
 
-        // get the next bubble
-        nextBubble();
+        // get the next planet
+        load_next_planet();
     }
 
     // Collects the groups, floating groups and removes them.
-    // Sets the score and the next bubble.
-    function paladin(bubble) {
-        position = getMatrixPosition(bubble.x, bubble.y);
+    // Sets the score and the next planet.
+    function paladin(planet) {
+        position = get_planet_matrix_position(planet.x, planet.y);
 
         // special effect
-        if(bubble.type == bubble_types.sun) {
-            // always remove the sun bubble
-            bubble.assigned = true;
-            bubble.checked = true;
-            gamer.available_bubbles--;
+        if(planet.type == planet_types.sun) {
+            // always remove the sun planet
+            planet.assigned = true;
+            planet.checked = true;
+            gamer.available_planets--;
 
-            group = getNeighbours(position.x, position.y);
+            group = get_planet_neighbours(position.x, position.y);
         } else {
-            // try to find the same type of bubbles
-            group = findGroup(position.x, position.y, true);
+            // try to find the same type of planets
+            group = find_group(position.x, position.y, true);
         }
 
         // check the working_array length for remove or the sun is coming
-        if(group.length >= 3 || bubble.type == bubble_types.sun) {
+        if(group.length >= 3 || planet.type == planet_types.sun) {
             // set 0 to the missedGroup
             gamer.missed_groups = 0;
             // remove the group from the map
-            removeGroup();
+            remove_group();
             // search and remove the floating groups
-            group = findFloatingGroup();
+            group = find_floating_group();
             if(group.length > 0) {
-                removeFloatingGroup();
+                remove_floating_group();
             } else {
-                resetChecked();
+                reset_checked_planets();
             }
         } else {
             if(hardmode) {
                 gamer.missed_groups++;
                 if(gamer.missed_groups >= 5) {
                     gamer.missed_groups = 0;
-                    insertNewRow();
+                    insert_new_planet_row();
                 }
             }
-            resetChecked();
+            reset_checked_planets();
         }
 
-        // check for illegal bubbles
+        // check for illegal planets
         setTimeout(function(){
-            borderCheck();
+            bottom_border_check();
         }, 300);
 
-        // check the available bubbles
-        // if there is no bubble on the map, the gamer won this round
-        if(gamer.available_bubbles <= 0) {
-            setStatus(status.done);
+        // check the available planets
+        // if there is no planet on the map, the gamer won this round
+        if(gamer.available_planets <= 0) {
+            set_game_status(status.done);
         }
     }
 
-    function borderCheck() {
+    function bottom_border_check() {
         for (var i = 0; i < map.columns; i++) {
-            if(map.bubbles[i][map.rows - 1].type != bubble_types.none) {
-                setStatus(status.fail);
+            if(map.planets[i][map.rows - 1].type != planet_types.none) {
+                set_game_status(status.fail);
                 break;
             }
         }
     }
 
-    // Set the game status
-    function setStatus(s) {
-        current_status = s;
-        switch(s) {
-            case status.game_over: {
-                selectZone(zone.game_over);
-                clearInterval(gamer.timer.interval);
-                swithGameControlButtonText("Restart");
-            } break;
-            case status.done: {
-                selectZone(zone.complete);
-                clearInterval(gamer.timer.interval);
+    // Get a random int between low and high arguments
+    function random(low, high) {
+        return Math.floor(low + Math.random() * (high - low + 1));
+    }
 
-                // Convert to unused moves into score
-                set_stat(stat_types.score, gamer.score + gamer.shoots * map.shoot_score);
-                global_score = gamer.score;
-                refreshShoots(0);
+    // Convert radians to degrees
+    function rad_to_deg(angle) {
+        return angle * (180 / Math.PI);
+    }
+    
+    // Convert degrees to radians
+    function deg_to_rad(angle) {
+        return angle * (Math.PI / 180);
+    }
 
-                // change the Complete zone stats
-                $("#congratulation-level-span").text(gamer.level);
-                $("#congratulation-score-span").text(gamer.score);
-                $("#congratulation-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
-
-                swithGameControlButtonText("Next level");
-            } break;
-            case status.fail: {
-                set_stat(stat_types.lives, gamer.lives - 1);
-                if(gamer.lives <= 0) {
-                    setTimeout(function() {
-                        setStatus(status.game_over);
-                    }, 300);
-                } else {
-                    selectZone(zone.oops);
-
-                    // Pretend a good positioned shot
-                    set_stat(stat_types.shoots, gamer.shoots - 1);
-                    nextBubble();
-
-                    // RESET THE LEVEL
-                    resetLevel();
-
-                    // Get back to the game after one sec
-                    setTimeout(function(){
-                        selectZone(zone.game);
-                        setStatus(status.running);
-                    }, 1000);
-                }
-            } break;
+    function calculate_time() {
+        gamer.timer.second++;
+        if(gamer.timer.second > 59) {
+            gamer.timer.minute++;
+            gamer.timer.second = 0;
         }
+        if(gamer.timer.second > 59 && gamer.timer.minute > 59) {
+            clearInterval(gamer.timer.interval);
+        }
+        set_stat(stat_types.time);
     }
 
     init();

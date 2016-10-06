@@ -27,6 +27,9 @@
 			<div id="game-over-zone" class="zones">
 				<h2>GAME OVER</h2>
 				<p>Select <span>Restart</span> to try again.</p>
+				<p>Level <span id="failed-level-span">0</span> failed.</p>
+				<p>Score: <span id="failed-score-span">0</span></p>
+				<p>Time: <span id="failed-time-span">0</span></p>
 			</div>
 			<div id="complete-zone" class="zones">
 				<h2>CONGRATULATION!</h2>
@@ -42,7 +45,7 @@
 				<table>
 					<tr>
 						<td colspan="2">
-							Version: 0.7.0
+							Version: 0.9.0
 						</td>
 					</tr>
 					<tr>
@@ -121,33 +124,33 @@
 				<h1>Space Bubbles</h1>
 				<h4>A boring day in our galaxy...</h4>
 			</hgroup>
-			<div id="game-stats">
+			<div id="stats">
 				<h2>Lives</h2>
-				<div id="lives-img"></div>
+				<div id="lives"></div>
 				<h2>Score</h2>
-				<span id="game-score">0</span>
+				<span id="score">0</span>
 				<h2>Time</h2>
-				<span id="game-time">00:00</span>
+				<span id="time">00:00</span>
 				<h2>Level</h2>
-				<span id="game-level">0</span>
+				<span id="level">0</span>
 			</div>
-			<div id="game-menu">
+			<div id="menu">
 				<h2>Menu</h2>
 				<ul>
 					<li id="game-control-button">New Game</li>
 					<li id="high-scores-button" class="navigation-button">High Scores</li>
 					<li id="about-button" class="navigation-button">About</li>
-					<li id="music-button">Music ON</li>
-					<li id="effects-button">Effects ON</li>
-					<li id="fullscreen-button">Fullscreen OFF</li>
+					<li id="music-button">Music <span>ON</span></li>
+					<li id="effects-button">Effects <span>ON</span></li>
+					<li id="fullscreen-button">Fullscreen <span>OFF</span></li>
 					<li id="reset-button">Reset</li>
 				</ul>
 			</div>
-			<div id="game-next">
-				<canvas id="next" width="70" height="70"></canvas>
-				<div id="next-info">
-					<h2>Next</h2>
-					<p id="number-of-next">0</p>
+			<div id="next">
+				<canvas id="next-planet" width="70" height="70"></canvas>
+				<div id="info">
+					<h2>Shoots</h2>
+					<p id="shoots">0</p>
 				</div>
 			</div>
 		</div>
