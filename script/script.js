@@ -1,5 +1,5 @@
 $(function() {
-    // Canvas and context
+    // Canvas and context init
     var canvas =                document.getElementById("game");
     var context =               canvas.getContext("2d");
     var canvas_next =           document.getElementById("next-planet");
@@ -15,27 +15,27 @@ $(function() {
         height:                 0,                  // height
         columns:                9,                  // number of columns
         rows:                   13,                 // number of rows
-        downgrade:              4,                  // numbers of free rows at the start
+        downgrade:              4,                  // numbers of free rows at the begining
         planet_w:               planet_size,        // planet image width
         planet_h:               planet_size,        // planet image height
         planet_r:               25,                 // planet radius from center
         planet_s:               5,                  // planet split pixel
         planets:                [],                 // 2D planets array
-        single_score:           3,                  // a single planet`s score
-        floating_score:         5,                  // a single floating planet`s score
-        shoot_score:            15,                 // a single unused move score
-        number_of_max_lives:    3      
+        single_score:           3,                  // single planet score
+        floating_score:         5,                  // floating planet score
+        shoot_score:            15,                 // an unused shoot score
+        number_of_max_lives:    3                   // the number of the maximum lives per game
     };
 
     // planet class
     var Planet = function(x, y, type, assigned, removed, checked, id) {
-        this.x =                x;                  // set the x position
-        this.y =                y;                  // set the y position
-        this.type =             type;               // set the type
-        this.assigned =         assigned;           // set the assigned option
-        this.removed =          removed;            // set the removed option
-        this.checked =          checked;            // set the checked option
-        this.id =               id;                 // set the planet id
+        this.x =                x;
+        this.y =                y;
+        this.type =             type;
+        this.assigned =         assigned;
+        this.removed =          removed;
+        this.checked =          checked;
+        this.id =               id;
     }
 
     // Gamer information
@@ -64,11 +64,11 @@ $(function() {
         timer: {
             minute:             0,                  // actual timer minute
             second:             0,                  // actual timer second
-            interval:           null                // timer interval
+            interval:           null                // timer interval object
         }
     };
 
-    // Statistical struct
+    // Statistical table structure
     var stat_types = {
         lives:                  0,
         score:                  1,
@@ -77,6 +77,7 @@ $(function() {
         shoots:                 4
     };
 
+    // The menu structure
     var menu_items = {
         game_control:           0,
         high_scores:            1,
@@ -87,7 +88,7 @@ $(function() {
         reset:                  6
     };
 
-    // The music object
+    // The main music object
     var music = {
         mute:                   false,
         dom:                    null
@@ -112,6 +113,7 @@ $(function() {
 
     // Zones enum
     var zone = {
+        // list with the html tags id
         list:                   [
                                 'game-zone',
                                 'welcome-zone',
@@ -129,7 +131,7 @@ $(function() {
         complete:               4,
         highscores:             5,
         about:                  6,
-        oops:                   7
+        oops:                   7 
     };
 
     // The planets type enum
@@ -178,7 +180,6 @@ $(function() {
     function init() {
         // Set the init status.
         set_game_status(status.init);
-
         // set the welcome zone
         set_action_zone(zone.welcome);
 
@@ -207,7 +208,6 @@ $(function() {
                     set_game_status(status.paused);
                     set_action_zone(zone.pause);
                     set_menu_item_text(menu_items.game_control, "Continue");
-                    // Stop the timer
                     clearInterval(gamer.timer.interval);
                 } break;
                 case status.done:
@@ -217,12 +217,12 @@ $(function() {
                     set_game_status(status.running);
                     set_action_zone(zone.game);
                     set_menu_item_text(menu_items.game_control, "Pause");
-                    // Start the timer
                     gamer.timer.interval = setInterval(calculate_time, 1000);
                 } break;
             }
         });
 
+        // The menu item click functions
         $('#high-scores-button').on('click', function() {
             set_action_zone(zone.highscores);
         });
@@ -353,7 +353,7 @@ $(function() {
         };
     }
 
-    // New game
+    // create a new game
     function new_game() {
         // reset the planets
         reset_checked_planets();
@@ -374,7 +374,6 @@ $(function() {
         gamer.timer.minute = 0;
         gamer.timer.second = 0;
         set_stat(stat_types.time);
-        // Init a new timer
         gamer.timer.interval = setInterval(calculate_time, 1000);
 
         // Create a new map
@@ -409,7 +408,7 @@ $(function() {
             // Get ready for next frame by setting then=now, but also, adjust for fps_interval
             then = now - (elapsed % fps_interval);
 
-            // drawing context
+            // draw the context
             if(planets_image.loaded) {
                 context.clearRect(0, 0, canvas.width, canvas.height);
                 render_planets();
@@ -473,6 +472,7 @@ $(function() {
         }
     }
 
+    // change the statisctical display table items texts
     function set_stat(item, value = null) {
         switch(item) {
             case stat_types.lives: {
@@ -509,6 +509,7 @@ $(function() {
         }
     }
 
+    // change the menu items text
     function set_menu_item_text(item, value) {
         switch(item) {
             case menu_items.game_control: {
@@ -529,7 +530,7 @@ $(function() {
         }
     }
 
-    // Set the game status
+    // Set up the game status, and add some additional options
     function set_game_status(s) {
         current_status = s;
         // additional options
@@ -560,7 +561,8 @@ $(function() {
                 if(gamer.lives <= 0) {
                     setTimeout(function() {
                         set_game_status(status.game_over);
-                        // change the stats
+
+                        // change the game over stats
                         $("#failed-level-span").text(gamer.level);
                         $("#failed-score-span").text(gamer.score);
                         $("#failed-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
@@ -626,6 +628,7 @@ $(function() {
         insert_counter = 0;
     }
 
+    // reset the current level with the actual score
     function reset_current_level() {
         reset_checked_planets();
         reset_planets_type();
@@ -640,6 +643,7 @@ $(function() {
         load_next_planet();
     }
 
+    // set up the next level ingredients and information
     function next_level() {
         reset_checked_planets();
         reset_planets_type();
@@ -712,7 +716,7 @@ $(function() {
         }
     }
 
-    // Render the planets
+    // Render the planets array
     function render_planets() {
         if(bar >= planet_size) {
             bar = 0;
@@ -729,11 +733,12 @@ $(function() {
                 var position = get_planet_real_position(i, j);
                 planet.x = position.x;
                 planet.y = position.y;
+
                 // get the cropped posiiton
                 var crop = get_planet_crop(map.planets[i][j].type);
 
                 if(planet.assigned) {
-                    // planet animation
+                    // planet removing animation
                     if(bar >= planet_size) {
                         planet.assigned = false;
                         planet.removed = true;
@@ -771,7 +776,7 @@ $(function() {
         }
     }
 
-    // Render the aiming line for the user
+    // Render the aiming line
     function render_aim_helper_line() {
         var c = {
             x: gamer.x + map.planet_w / 2,
@@ -787,7 +792,7 @@ $(function() {
         context.stroke();
     }
 
-    // Render the border line
+    // Render the bottom border line
     function render_bottom_border() {
         context.setLineDash([5, 15]);
 
@@ -799,7 +804,7 @@ $(function() {
         context.stroke();
     }
 
-    // Returns the planet position
+    // Returns the planet real position on the canvas
     function get_planet_real_position(column, row) {
         var x = map.x + column * map.planet_w;
         
@@ -817,7 +822,7 @@ $(function() {
         return {x: x, y: y};
     }
 
-    // Return the matrix current position
+    // Returns with the planet matrix position
     function get_planet_matrix_position(x, y) {
         var my = Math.floor((y - map.y) / (map.planet_h - map.planet_s));
 
@@ -836,7 +841,7 @@ $(function() {
         return {x: mx, y: my};
     }
 
-    // Returns the distance between two planets
+    // Returns with the distance between two planets
     function is_collide(x1, y1, r1, x2, y2, r2) {
         var deltax = x1 - x2;
         var deltay = y1 - y2;
@@ -847,7 +852,7 @@ $(function() {
         return false;
     }
 
-    // Returns the selected planet neighbours in an array
+    // Returns with the selected planet neighbours in an array
     function get_planet_neighbours(x, y) {
         var neighbours = [];
 
@@ -888,6 +893,7 @@ $(function() {
         };
     }
 
+    // reset the planets cehecked status to the default (false)
     function reset_checked_planets() {
         for (var j = 0; j < map.rows; j++) {
             for (var i = 0; i < map.columns; i++) {
@@ -896,6 +902,7 @@ $(function() {
         }
     }
 
+    // reset the planets removed status to the default (false)
     function reset_removed_planets() {
         for (var j = 0; j < map.rows; j++) {
             for (var i = 0; i < map.columns; i++) {
@@ -904,14 +911,16 @@ $(function() {
         }
     }
 
+    // reset the planets type to the default (none)
     function reset_planets_type() {
         for (var j = 0; j < map.rows; j++) {
             for (var i = 0; i < map.columns; i++) {
-                map.planets[i][j].type = -1;
+                map.planets[i][j].type = planet_types.none;
             }
         }
     }
     
+    // insert a new planet row to the top
     function insert_new_planet_row() {
         insert_counter++;
         for (var i = 0; i < map.columns; i++) {
@@ -928,6 +937,8 @@ $(function() {
         }
     }
 
+    // returns with the group of planets
+    // tha group type is depends on tha match value (true = same, false = different planets allowed)
     function find_group(x, y, match) {
         var planet = map.planets[x][y];
         working_array = [planet];
@@ -955,6 +966,7 @@ $(function() {
 
                 // calculate the current planet matrix position
                 var position = get_planet_matrix_position(current_planet.x, current_planet.y);
+
                 // get the neighbours of the current planet
                 var neighbours = get_planet_neighbours(position.x, position.y);
 
@@ -972,9 +984,8 @@ $(function() {
         return temp_group;
     }
 
+    // return with an array which is contains one or more floating planet groups
     function find_floating_group() {
-        //reset_checked_planets();
-
         var inner_groups = [];
 
         // check every planet in the map
@@ -1009,6 +1020,7 @@ $(function() {
         return inner_groups;
     }
 
+    // assign the global group items to remove
     function remove_group() {
         // Enable the remove animation
         remove_animation = true;
@@ -1030,6 +1042,7 @@ $(function() {
         effects.explosion.play();
     }
 
+    // assign the global group floating arrays to remove
     function remove_floating_group() {
         // Enable the remove animation
         remove_animation = true;
@@ -1052,7 +1065,7 @@ $(function() {
         effects.explosion.play();
     }
 
-    // Shoot the planet
+    // gamer planet shoot
     function shoot() {
         if(processing) {
             gamer.planet.x += gamer.planet.speed * Math.cos(deg_to_rad(gamer.planet.angle));
@@ -1106,7 +1119,7 @@ $(function() {
         }
     }
 
-    // Fix the planet position
+    // Fix a planet position
     function put_chains() {
         processing = false;
         // get the planet's current center position
@@ -1154,12 +1167,12 @@ $(function() {
         load_next_planet();
     }
 
-    // Collects the groups, floating groups and removes them.
+    // Collects the groups and the floating groups and remove them.
     // Sets the score and the next planet.
     function paladin(planet) {
         position = get_planet_matrix_position(planet.x, planet.y);
 
-        // special effect
+        // special effect (sun)
         if(planet.type == planet_types.sun) {
             // always remove the sun planet
             planet.assigned = true;
@@ -1186,6 +1199,7 @@ $(function() {
                 reset_checked_planets();
             }
         } else {
+            // level 5 or higher
             if(hardmode) {
                 gamer.missed_groups++;
                 if(gamer.missed_groups >= 5) {
@@ -1201,13 +1215,14 @@ $(function() {
             bottom_border_check();
         }, 300);
 
-        // check the available planets
+        // check for available planets
         // if there is no planet on the map, the gamer won this round
         if(gamer.available_planets <= 0) {
             set_game_status(status.done);
         }
     }
 
+    // check the 
     function bottom_border_check() {
         for (var i = 0; i < map.columns; i++) {
             if(map.planets[i][map.rows - 1].type != planet_types.none) {
@@ -1232,6 +1247,7 @@ $(function() {
         return angle * (Math.PI / 180);
     }
 
+    // "timer" helper
     function calculate_time() {
         gamer.timer.second++;
         if(gamer.timer.second > 59) {
