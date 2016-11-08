@@ -255,6 +255,7 @@ $(function() {
 
         $('#reset-button').on('click', function() {
             if(current_status != status.init) {
+                db_insert_new_item();
                 reset();
                 set_game_status(status.init);
                 set_menu_item_text(menu_items.game_control, "New Game");
@@ -564,7 +565,6 @@ $(function() {
                 // Convert to unused moves into score
                 set_stat(stat_types.score, gamer.score + gamer.shoots * map.shoot_score);
                 global_score = gamer.score;
-                set_stat(stat_types.shoots, 0);
 
                 // change the Complete zone stats
                 $("#congratulation-level-span").text(gamer.level);
@@ -585,13 +585,7 @@ $(function() {
                         $("#failed-score-span").text(gamer.score);
                         $("#failed-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
 
-                        if(global_score > 0) {
-                            console.log("INSERT IS ON");
-                            db.insert({score:gamer.score, level:gamer.level, time:gamer.timer.minute + ":" + gamer.timer.second});
-                            if(db().count() > 24) {
-                                db().order("score desc").last().remove();
-                            }
-                        }
+                        db_insert_new_item();
                     }, 300);
                 } else {
                     set_action_zone(zone.oops);
@@ -768,7 +762,7 @@ $(function() {
             bar = 0;
             remove_animation = false;
         } else if(remove_animation) {
-            bar++;
+            bar += 2;
         }
 
         for(var j = 0; j < map.rows; j++) {
@@ -1307,6 +1301,16 @@ $(function() {
             clearInterval(gamer.timer.interval);
         }
         set_stat(stat_types.time);
+    }
+
+    // insert function for the db
+    function db_insert_new_item() {
+        if(global_score > 0) {
+            db.insert({score:gamer.score, level:gamer.level, time:gamer.timer.minute + ":" + gamer.timer.second});
+            if(db().count() > 24) {
+                db().order("score desc").last().remove();
+            }
+        }
     }
 
     init();
