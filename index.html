@@ -10,6 +10,16 @@
 	<link rel="stylesheet" href="css/screen.css">
 </head>
 <body id="fullscreen-body">
+	<!-- Facebook -->
+    <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.8";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script>
+
 	<div id="wrapper">
 		<div id="zone">
 			<div id="game-zone" class="zones">
@@ -49,11 +59,15 @@
 				</ul>
 			</div>
 			<div id="about-zone" class="zones">
+				<div id="fb-button">
+					<div class="fb-like" data-href="http://knightburton.github.io/SpaceBubbles/" data-layout="button_count" data-action="like" data-size="small" data-show-faces="false" data-share="false"></div>
+				</div>
+
 				<h2>About</h2>
 				<table>
 					<tr>
 						<td colspan="2">
-							Version: 0.9.0
+							Version: 0.9.1
 						</td>
 					</tr>
 					<tr>

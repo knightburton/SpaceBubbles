@@ -287,6 +287,14 @@ h4 {
 }
 
 /* About */
+#wrapper #zone #about-zone #fb-button {
+	width: 100px;
+	height: 20px;
+	position: absolute;
+	top: 3px;
+	right: 3px;
+}
+
 #wrapper #zone #about-zone h2 {
 	text-align: center;
 	margin: 10px 0 20px 0;
