@@ -436,7 +436,7 @@ $(function() {
             }
 
             if(processing) {
-                shoot();
+                fire();
             }
         }
     }
@@ -468,7 +468,7 @@ $(function() {
 
     // Click in the canvas
     function canvas_click() {
-        if(!processing) {
+        if(!processing  && !remove_animation) {
             // play the shoot effect
             effects.shoot.play();
 
@@ -806,8 +806,11 @@ $(function() {
             gamer.planet.x = gamer.x;
             gamer.planet.y = gamer.y;
         }
-        var crop = get_planet_crop(gamer.planet.type);
-        context.drawImage(planets_image.source, crop, 0, map.planet_w, map.planet_h, gamer.planet.x, gamer.planet.y, map.planet_w, map.planet_h);
+
+        if(!remove_animation) {
+            var crop = get_planet_crop(gamer.planet.type);
+            context.drawImage(planets_image.source, crop, 0, map.planet_w, map.planet_h, gamer.planet.x, gamer.planet.y, map.planet_w, map.planet_h);
+        }
     }
 
     // Render the next planet
@@ -1110,8 +1113,8 @@ $(function() {
         effects.explosion.play();
     }
 
-    // gamer planet shoot
-    function shoot() {
+    // fire a planet
+    function fire() {
         if(processing) {
             gamer.planet.x += gamer.planet.speed * Math.cos(deg_to_rad(gamer.planet.angle));
             gamer.planet.y += gamer.planet.speed * -1 * Math.sin(deg_to_rad(gamer.planet.angle));
