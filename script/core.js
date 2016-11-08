@@ -176,6 +176,10 @@ $(function() {
         then,
         elapsed;
 
+    // Taffy db
+    var db = TAFFY();
+    db.store("high_scores");
+
     // Initialize function
     function init() {
         // Set the init status.
@@ -197,14 +201,14 @@ $(function() {
             switch(current_status) {
                 case status.init:
                 case status.game_over: {
-                    toggle_menu_action();
+                    toggle_menu_action("both", false);
                     set_game_status(status.running);
                     set_action_zone(zone.game);
                     set_menu_item_text(menu_items.game_control, "Pause");
                     new_game();
                 } break;
                 case status.running: {
-                    toggle_menu_action();
+                    toggle_menu_action("both", true);
                     set_game_status(status.paused);
                     set_action_zone(zone.pause);
                     set_menu_item_text(menu_items.game_control, "Continue");
@@ -213,7 +217,7 @@ $(function() {
                 case status.done:
                     next_level();
                 case status.paused: {
-                    toggle_menu_action();
+                    toggle_menu_action("both", false);
                     set_game_status(status.running);
                     set_action_zone(zone.game);
                     set_menu_item_text(menu_items.game_control, "Pause");
@@ -225,10 +229,24 @@ $(function() {
         // The menu item click functions
         $('#high-scores-button').on('click', function() {
             set_action_zone(zone.highscores);
+            toggle_menu_action(menu_items.high_scores, false);
+            toggle_menu_action(menu_items.about, true);
+            $('#ul-content').empty();
+            db().order("score desc").each(function (record, recordnumber) {
+                var score_div = $('<div><span>' + record["score"] + '</span></div>');
+                var level_div = $('<div><span>' + record["level"] + '</span></div>');
+                var time_div = $('<div><span>' + record["time"] + '</span></div>');
+                
+                var li = $('<li></li>').append(score_div).append(level_div).append(time_div);
+
+                $('#ul-content').append(li);
+            });
         });
 
         $('#about-button').on('click', function() {
             set_action_zone(zone.about);
+            toggle_menu_action(menu_items.high_scores, true);
+            toggle_menu_action(menu_items.about, false);
         });
 
         $('#music-button').on('click', toggle_music);
@@ -461,7 +479,7 @@ $(function() {
         }
     }
 
-    // Set the selected zone
+    // Set the selected zone :D
     function set_action_zone(selected_zone) {
         for(var i = 0; i < zone.list.length; i++) {
             if(i != selected_zone) {
@@ -537,11 +555,13 @@ $(function() {
         switch(s) {
             case status.game_over: {
                 set_action_zone(zone.game_over);
+                toggle_menu_action("both", true);
                 clearInterval(gamer.timer.interval);
                 set_menu_item_text(menu_items.game_control, "Restart");
             } break;
             case status.done: {
                 set_action_zone(zone.complete);
+                toggle_menu_action("both", true);
                 clearInterval(gamer.timer.interval);
 
                 // Convert to unused moves into score
@@ -559,6 +579,7 @@ $(function() {
             case status.fail: {
                 set_stat(stat_types.lives, gamer.lives - 1);
                 if(gamer.lives <= 0) {
+                    global_score = gamer.score;
                     setTimeout(function() {
                         set_game_status(status.game_over);
 
@@ -566,6 +587,14 @@ $(function() {
                         $("#failed-level-span").text(gamer.level);
                         $("#failed-score-span").text(gamer.score);
                         $("#failed-time-span").text(gamer.timer.minute + " min " + gamer.timer.second + " sec");
+
+                        if(global_score > 0) {
+                            console.log("INSERT IS ON");
+                            db.insert({score:gamer.score, level:gamer.level, time:gamer.timer.minute + ":" + gamer.timer.second});
+                            if(db().count() > 24) {
+                                db().order("score desc").last().remove();
+                            }
+                        }
                     }, 300);
                 } else {
                     set_action_zone(zone.oops);
@@ -588,8 +617,24 @@ $(function() {
     }
 
     // Enable or disable navigation buttons
-    function toggle_menu_action() {
-        $(".navigation-button").toggleClass("disable-navigation-button");
+    function toggle_menu_action(item, enabled) {
+        var element = null;
+        switch(item) {
+            case menu_items.high_scores: {
+                element = $("#high-scores-button");
+            } break;
+            case menu_items.about: {
+                element = $("#about-button");
+            } break;
+            default: {
+                element = $(".navigation-button");
+            } break;
+        }
+        if(enabled) {
+            element.removeClass("disable-navigation-button");
+        } else {
+            element.addClass("disable-navigation-button");
+        }
     }
 
     // Mute and unmute the background music

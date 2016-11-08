@@ -5,6 +5,7 @@
 	<title>Space Bubbles</title>
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+	<script src="script/taffy.js"></script>
 	
 	<link rel="stylesheet" href="css/screen.css">
 </head>
@@ -38,6 +39,14 @@
 			</div>
 			<div id="high-scores-zone" class="zones">
 				<h2>High Scores</h2>
+				<ul id="ul-hs">
+					<li id="ul-header">
+						<div><span>Score</span></div>
+						<div><span>Level</span></div>
+						<div><span>Time</span></div>
+					</li>
+					<div id="ul-content"></div>
+				</ul>
 			</div>
 			<div id="about-zone" class="zones">
 				<h2>About</h2>
@@ -156,6 +165,6 @@
 	</div>
 
 	<!-- Include the core script -->
-	<script src="script/script.js"></script>
+	<script src="script/core.js"></script>
 </body>
 </html>

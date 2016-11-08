@@ -270,6 +270,22 @@ h4 {
 	font-size: 30px;
 }
 
+#wrapper #zone #high-scores-zone #ul-hs li {
+	list-style: none;
+	display: block;
+}
+
+#wrapper #zone #high-scores-zone #ul-hs li#ul-header {
+	color: #f00;
+}
+
+#wrapper #zone #high-scores-zone #ul-hs li div {
+	width: 130px;
+	margin: 3px;
+	float: left;
+	text-align: center;
+}
+
 /* About */
 #wrapper #zone #about-zone h2 {
 	text-align: center;
