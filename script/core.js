@@ -519,9 +519,6 @@ $(function() {
             } break;
             case stat_types.shoots: {
                 gamer.shoots = value;
-                if(gamer.shoots < 80) {
-                    gamer.shoots = 80;
-                }
                 $('#shoots').text(value);
             } break;
         }
@@ -694,7 +691,11 @@ $(function() {
         reset_planets_type();
         reset_removed_planets();
         set_stat(stat_types.level, gamer.level + 1);
-        set_stat(stat_types.shoots, 120 - ((gamer.level - 1) * 5));
+        var temp_shoots = 120 - ((gamer.level - 1) * 5);
+        if(temp_shoots < 80) {
+            temp_shoots = 80;
+        }
+        set_stat(stat_types.shoots, temp_shoots);
         gamer.available_planets = 0;
         gamer.missed_groups = 0;
         set_stat(stat_types.score, global_score);
