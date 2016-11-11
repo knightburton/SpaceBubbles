@@ -1308,7 +1308,8 @@ $(function() {
         if(global_score > 0) {
             db.insert({score:gamer.score, level:gamer.level, time:gamer.timer.minute + ":" + gamer.timer.second});
             if(db().count() > 24) {
-                db().order("score desc").last().remove();
+                var id = db().order("round desc").last()['___id']
+                db({___id: id}).remove();
             }
         }
     }
